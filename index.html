@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright TypeScript Playbook</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --cover-bg: #0a0e17;
+    --page-bg: #ffffff;
+    --text-primary: #1a1a2e;
+    --text-secondary: #4a4a6a;
+    --text-muted: #8888a8;
+    --accent: #e63946;
+    --accent-light: #ff6b6b;
+    --accent-dark: #b71c2a;
+    --code-bg: #1e1e2e;
+    --code-text: #cdd6f4;
+    --highlight: #2ecc71;
+    --warning: #f39c12;
+    --info: #3498db;
+    --border: #e8e8f0;
+    --chapter-bg: #f7f7fc;
+    --sidebar-accent: #e63946;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    background: #e0e0e0;
+    line-height: 1.7;
+    font-size: 11pt;
+  }
+
+  /* Fixed download bar */
+  .download-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .download-bar .brand {
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .download-bar .brand i { color: var(--accent); font-size: 18px; }
+  .download-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 22px;
+    border-radius: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .download-btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+  /* Page container */
+  .page-container {
+    max-width: 210mm;
+    margin: 60px auto;
+    background: var(--page-bg);
+    box-shadow: 0 0 60px rgba(0,0,0,0.15);
+  }
+
+  /* Cover page */
+  .cover {
+    background: var(--cover-bg);
+    min-height: 297mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(230,57,70,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -150px;
+    left: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(52,152,219,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .cover-logo {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-logo svg { width: 100%; height: 100%; }
+  .cover-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 42pt;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-title span { color: var(--accent); }
+  .cover-subtitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16pt;
+    color: var(--text-muted);
+    font-weight: 300;
+    margin-bottom: 50px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 2px;
+  }
+  .cover-meta {
+    position: relative;
+    z-index: 1;
+    color: var(--text-muted);
+    font-size: 10pt;
+    line-height: 2;
+  }
+  .cover-meta strong { color: #ccc; font-weight: 500; }
+  .cover-decoration {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+  }
+  .cover-decoration span {
+    width: 30px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+  .cover-decoration span:nth-child(2) { width: 50px; opacity: 1; }
+  .cover-grid {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* Content pages */
+  .page {
+    padding: 50px 60px;
+    min-height: 297mm;
+    position: relative;
+    page-break-after: always;
+  }
+  .page::after {
+    content: '';
+    position: absolute;
+    bottom: 30px;
+    left: 60px;
+    right: 60px;
+    height: 1px;
+    background: var(--border);
+  }
+  .page-number {
+    position: absolute;
+    bottom: 12px;
+    right: 60px;
+    font-size: 9pt;
+    color: var(--text-muted);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .page-author {
+    position: absolute;
+    bottom: 12px;
+    left: 60px;
+    font-size: 9pt;
+    color: var(--text-muted);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .cover-author {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10pt;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+  }
+  .cover-author-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16pt;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+  .cover-author-name a {
+    color: inherit;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .cover-author-name a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .cover-author-title {
+    font-size: 10pt;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+  }
+  .author-linkedin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 9pt;
+    color: var(--accent);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .author-linkedin:hover {
+    color: #ff4d5a;
+    transform: translateX(3px);
+  }
+  .author-linkedin i {
+    font-size: 11pt;
+  }
+
+  .about-author {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 30px;
+    margin-top: 40px;
+    text-align: left;
+    max-width: 500px;
+  }
+  .about-author h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14pt;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 16px 0;
+  }
+  .about-author p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9.5pt;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.7;
+    margin: 0 0 14px 0;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .social-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(230,57,70,0.15);
+    border: 1px solid rgba(230,57,70,0.3);
+    border-radius: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 18pt;
+  }
+  .social-icon-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(230,57,70,0.4);
+  }
+
+  /* TOC */
+  .toc-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26pt;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: var(--text-primary);
+  }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toc-item:hover { padding-left: 8px; }
+  .toc-chapter {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 12pt;
+    color: var(--accent);
+    min-width: 80px;
+  }
+  .toc-name {
+    font-size: 12pt;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .toc-page {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10pt;
+    color: var(--text-muted);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* Chapter pages */
+  .chapter-header {
+    background: var(--chapter-bg);
+    margin: -50px -60px 40px -60px;
+    padding: 40px 60px;
+    border-bottom: 3px solid var(--accent);
+  }
+  .chapter-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11pt;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .chapter-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24pt;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  /* Headings */
+  h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15pt;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 28px 0 12px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+  }
+  h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12pt;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; color: var(--text-secondary); }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 8px;
+    margin: 16px 0 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  .code-header {
+    background: rgba(255,255,255,0.05);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .code-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #ff5f57; }
+  .code-dots span:nth-child(2) { background: #ffbd2e; }
+  .code-dots span:nth-child(3) { background: #28c840; }
+  .code-filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: var(--text-muted);
+  }
+  .code-block pre {
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    line-height: 1.65;
+    color: var(--code-text);
+  }
+  .code-block code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Syntax highlighting */
+  .kw { color: #c678dd; }
+  .fn { color: #61afef; }
+  .str { color: #98c379; }
+  .cm { color: #5c6370; font-style: italic; }
+  .num { color: #d19a66; }
+  .op { color: #56b6c2; }
+  .type { color: #e5c07b; }
+  .prop { color: #e06c75; }
+  .dec { color: #c678dd; }
+  .tag { color: #e06c75; }
+  .attr { color: #d19a66; }
+  .punc { color: #abb2bf; }
+
+  /* Inline code */
+  code.inline {
+    background: #f0f0f8;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    color: var(--accent-dark);
+    border: 1px solid var(--border);
+  }
+
+  /* Callout boxes */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .callout i { margin-top: 3px; font-size: 14px; }
+  .callout-tip {
+    background: #f0faf4;
+    border-left: 3px solid var(--highlight);
+  }
+  .callout-tip i { color: var(--highlight); }
+  .callout-warn {
+    background: #fffbf0;
+    border-left: 3px solid var(--warning);
+  }
+  .callout-warn i { color: var(--warning); }
+  .callout-info {
+    background: #f0f7ff;
+    border-left: 3px solid var(--info);
+  }
+  .callout-info i { color: var(--info); }
+  .callout-danger {
+    background: #fff5f5;
+    border-left: 3px solid var(--accent);
+  }
+  .callout-danger i { color: var(--accent); }
+  .callout-content { font-size: 10pt; color: var(--text-secondary); line-height: 1.6; }
+  .callout-content strong { color: var(--text-primary); }
+
+  /* Lists */
+  ul, ol {
+    margin: 10px 0 16px 20px;
+    color: var(--text-secondary);
+  }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--accent); }
+
+  /* Diagrams */
+  .diagram-container {
+    background: var(--chapter-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .diagram-container svg { max-width: 100%; }
+  .diagram-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8pt;
+    color: var(--text-muted);
+    margin-top: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  /* Table */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 16px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  th {
+    background: var(--chapter-bg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafe; }
+
+  /* Step boxes */
+  .step-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .step-box {
+    background: var(--chapter-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+  }
+  .step-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.2;
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    line-height: 1;
+  }
+  .step-box h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .step-box p {
+    font-size: 9pt;
+    margin: 0;
+    color: var(--text-muted);
+  }
+
+  /* Feature cards */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .feature-card {
+    background: var(--chapter-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .feature-card i {
+    font-size: 24px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .feature-card h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10pt;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+  .feature-card p {
+    font-size: 8.5pt;
+    margin: 0;
+    color: var(--text-muted);
+  }
+
+  /* Flow diagram */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .flow-box {
+    background: var(--code-bg);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .flow-box.accent { background: var(--accent); }
+  .flow-arrow {
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* Comparison grid */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .compare-col {
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .compare-col.good { background: #f0faf4; border-color: #2ecc71; }
+  .compare-col.bad { background: #fff5f5; border-color: var(--accent); }
+  .compare-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .compare-col.good .compare-label { color: var(--highlight); }
+  .compare-col.bad .compare-label { color: var(--accent); }
+
+  /* Print styles */
+  @media print {
+    body { background: #fff; font-size: 10pt; }
+    .download-bar { display: none !important; }
+    .page-container { margin: 0; box-shadow: none; max-width: 100%; }
+    .page { padding: 40px 50px; page-break-after: always; }
+    .page::after { display: none; }
+    .chapter-header { margin: -40px -50px 30px -50px; padding: 30px 50px; }
+    .cover { min-height: 100vh; }
+    .code-block { break-inside: avoid; }
+    .callout { break-inside: avoid; }
+    .diagram-container { break-inside: avoid; }
+    .step-grid { break-inside: avoid; }
+    .feature-grid { break-inside: avoid; }
+    .comparison { break-inside: avoid; }
+    @page {
+      size: A4;
+      margin: 0;
+    }
+  }
+
+  /* Animations for screen */
+  @media screen {
+    .page-container { animation: fadeUp 0.6s ease-out; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Download Bar -->
+<div class="download-bar">
+  <div class="brand">
+    <i class="fas fa-book-open"></i>
+    Playwright TypeScript Playbook
+  </div>
+  <button class="download-btn" onclick="window.print()">
+    <i class="fas fa-file-pdf"></i>
+    Export as PDF
+  </button>
+</div>
+
+<div class="page-container">
+
+  <!-- ==================== COVER PAGE ==================== -->
+  <div class="cover">
+    <div class="cover-grid"></div>
+    <div class="cover-logo">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <mask id="mask" x="0" y="0" width="100" height="100">
+          <rect width="100" height="100" rx="20" fill="white"/>
+        </mask>
+        <g mask="url(#mask)">
+          <rect width="100" height="100" rx="20" fill="#e63946"/>
+          <path d="M25 30 L50 15 L75 30 L75 70 L50 85 L25 70Z" fill="none" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M50 15 L50 85" stroke="white" stroke-width="2" opacity="0.5"/>
+          <path d="M25 30 L75 70" stroke="white" stroke-width="2" opacity="0.5"/>
+          <path d="M75 30 L25 70" stroke="white" stroke-width="2" opacity="0.5"/>
+          <circle cx="50" cy="50" r="12" fill="white" opacity="0.9"/>
+          <path d="M46 46 L56 50 L46 54Z" fill="#e63946"/>
+        </g>
+      </svg>
+    </div>
+    <div class="cover-title">Playwright<br><span>TypeScript</span><br>Playbook</div>
+    <div class="cover-subtitle">From Zero to Production-Ready E2E Tests</div>
+    <div class="cover-meta">
+      <strong>Version 2.1</strong> &mdash; Updated for Playwright 1.60.0 (compatible with 1.50+)<br>
+      Comprehensive Guide with Patterns, Anti-Patterns & Real-World Examples<br><br>
+      2026 Edition
+    </div>
+    <div class="cover-author">
+      <div class="cover-author-name">
+        <a href="https://www.linkedin.com/in/mahiteja-bollojula-477a60145/" target="_blank" rel="noopener">Mahiteja Bollojula</a>
+      </div>
+      <a href="https://www.linkedin.com/in/mahiteja-bollojula-477a60145/" target="_blank" rel="noopener" class="author-linkedin">
+        <i class="fab fa-linkedin"></i>
+        Connect on LinkedIn
+      </a>
+    </div>
+    <div class="cover-decoration">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- ==================== TABLE OF CONTENTS ==================== -->
+  <div class="page">
+    <div class="toc-title">Table of Contents</div>
+
+    <div class="toc-item"><span class="toc-chapter">01</span><span class="toc-name">Why Playwright & TypeScript</span><span class="toc-page">3</span></div>
+    <div class="toc-item"><span class="toc-chapter">02</span><span class="toc-name">Setup & Project Architecture</span><span class="toc-page">5</span></div>
+    <div class="toc-item"><span class="toc-chapter">03</span><span class="toc-name">Locators & Selectors Deep Dive</span><span class="toc-page">8</span></div>
+    <div class="toc-item"><span class="toc-chapter">04</span><span class="toc-name">Interactions & User Simulations</span><span class="toc-page">11</span></div>
+    <div class="toc-item"><span class="toc-chapter">05</span><span class="toc-name">Assertions & Verification</span><span class="toc-page">14</span></div>
+    <div class="toc-item"><span class="toc-chapter">06</span><span class="toc-name">Page Object Model Architecture</span><span class="toc-page">17</span></div>
+    <div class="toc-item"><span class="toc-chapter">07</span><span class="toc-name">Handling Async & Waiting</span><span class="toc-page">20</span></div>
+    <div class="toc-item"><span class="toc-chapter">08</span><span class="toc-name">Network Interception & Mocking</span><span class="toc-page">23</span></div>
+    <div class="toc-item"><span class="toc-chapter">09</span><span class="toc-name">Visual Regression Testing</span><span class="toc-page">26</span></div>
+    <div class="toc-item"><span class="toc-chapter">10</span><span class="toc-name">CI/CD Pipeline Integration</span><span class="toc-page">29</span></div>
+    <div class="toc-item"><span class="toc-chapter">11</span><span class="toc-name">Best Practices & Anti-Patterns</span><span class="toc-page">32</span></div>
+    <div class="toc-item"><span class="toc-chapter">12</span><span class="toc-name">Quick Reference Cheat Sheet</span><span class="toc-page">35</span></div>
+    <div class="callout callout-tip" style="margin-top:18px;">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Learn chapter-by-chapter in order for fundamentals, then revisit Chapters 8-12 as reference modules when building real test suites.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">2</span>
+  </div>
+
+  <!-- ==================== CHAPTER 1 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 01</div>
+      <div class="chapter-title">Why Playwright & TypeScript</div>
+    </div>
+
+    <p>Playwright is a modern end-to-end testing framework developed by Microsoft that enables reliable, fast, and cross-browser web testing. Combined with TypeScript's static type system, it creates a powerful foundation for test automation that catches bugs before they reach production.</p>
+
+    <h2>The Modern Testing Landscape</h2>
+    <p>The shift from manual QA to automated testing demands tools that are not just functional but resilient. Flaky tests erode trust in your test suite. Playwright was built from the ground up to eliminate the root causes of test flakiness: race conditions, timing issues, and brittle selectors.</p>
+
+    <!-- Architecture Diagram -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Browser engines -->
+        <rect x="30" y="20" width="140" height="70" rx="8" fill="#e63946" opacity="0.9"/>
+        <text x="100" y="52" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="11">Chromium</text>
+        <text x="100" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8">Chrome, Edge, Brave</text>
+
+        <rect x="210" y="20" width="140" height="70" rx="8" fill="#e63946" opacity="0.9"/>
+        <text x="280" y="52" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="11">Firefox</text>
+        <text x="280" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8">Gecko Engine</text>
+
+        <rect x="390" y="20" width="140" height="70" rx="8" fill="#e63946" opacity="0.9"/>
+        <text x="460" y="52" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="11">WebKit</text>
+        <text x="460" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8">Safari, Epiphany</text>
+
+        <!-- Arrows down -->
+        <line x1="100" y1="90" x2="280" y2="130" stroke="#e63946" stroke-width="1.5" opacity="0.4"/>
+        <line x1="280" y1="90" x2="280" y2="130" stroke="#e63946" stroke-width="1.5" opacity="0.4"/>
+        <line x1="460" y1="90" x2="280" y2="130" stroke="#e63946" stroke-width="1.5" opacity="0.4"/>
+
+        <!-- Playwright core -->
+        <rect x="140" y="130" width="280" height="50" rx="8" fill="#1a1a2e"/>
+        <text x="280" y="152" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="700" font-size="13">Playwright Core</text>
+        <text x="280" y="168" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8">Auto-waiting | Intercept | Trace</text>
+
+        <!-- Arrow down -->
+        <line x1="280" y1="180" x2="280" y2="198" stroke="#e63946" stroke-width="1.5" opacity="0.4"/>
+
+        <!-- TypeScript layer -->
+        <rect x="170" y="198" width="220" height="18" rx="4" fill="#3178c6"/>
+        <text x="280" y="211" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="9">TypeScript Type-Safe API</text>
+      </svg>
+      <div class="diagram-label">Figure 1.1 — Playwright Multi-Browser Architecture</div>
+    </div>
+
+    <h2>Key Advantages</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <i class="fas fa-clock"></i>
+        <h4>Auto-Waiting</h4>
+        <p>Automatically waits for elements to be visible, stable, and actionable before interacting.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-shield-halved"></i>
+        <h4>Zero Flakiness</h4>
+        <p>Built-in retry, network idle detection, and actionability checks eliminate race conditions.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-globe"></i>
+        <h4>Cross-Browser</h4>
+        <p>Single API for Chromium, Firefox, and WebKit with engine-level control.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-code"></i>
+        <h4>TypeScript Native</h4>
+        <p>First-class TypeScript support with full type definitions and IntelliSense.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-bolt"></i>
+        <h4>Parallel Execution</h4>
+        <p>Run tests across multiple workers, browsers, and shards simultaneously.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-magnifying-glass"></i>
+        <h4>Trace Viewer</h4>
+        <p>Rich post-mortem traces with DOM snapshots, network, and console logs.</p>
+      </div>
+    </div>
+
+    <h2>Playwright vs. Alternatives</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Feature</th><th>Playwright</th><th>Cypress</th><th>Selenium</th><th>Puppeteer</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Multi-Browser</td><td>Chromium, Firefox, WebKit</td><td>Chrome, Firefox, WebKit (limited)</td><td>All (via drivers)</td><td>Chromium only</td></tr>
+          <tr><td>Auto-Wait</td><td>Full actionability checks</td><td>Partial</td><td>Manual</td><td>Manual</td></tr>
+          <tr><td>Parallel Execution</td><td>Built-in workers</td><td>Plugin required</td><td>Grid needed</td><td>Manual</td></tr>
+          <tr><td>TypeScript</td><td>Native</td><td>Good</td><td>Bindings exist</td><td>Good</td></tr>
+          <tr><td>Network Intercept</td><td>Full</td><td>Full</td><td>Limited</td><td>Full</td></tr>
+          <tr><td>Tab/IFrame</td><td>Native support</td><td>Limited</td><td>Yes</td><td>Manual</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Start with one stable browser project first (usually Chromium), make tests reliable, then expand to Firefox/WebKit for true cross-browser confidence.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">3</span>
+  </div>
+
+  <!-- ==================== CHAPTER 2 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 02</div>
+      <div class="chapter-title">Setup & Project Architecture</div>
+    </div>
+
+    <h2>Initialization</h2>
+    <p>Playwright provides a CLI scaffolding tool that creates a complete project structure with TypeScript configuration, example tests, and Playwright configuration.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">terminal</span>
+      </div>
+      <pre><code><span class="cm"># Create a new Playwright project with TypeScript</span>
+npm init playwright@latest
+
+<span class="cm"># Or add to existing project</span>
+npm install -D @playwright/test
+npx playwright install --with-deps
+
+<span class="cm"># Verify installation</span>
+npx playwright --version</code></pre>
+    </div>
+
+    <h2>Recommended Project Structure</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 450 380" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background -->
+        <rect width="450" height="380" fill="#fafbfc" rx="8" stroke="#e0e0e0" stroke-width="1"/>
+        
+        <!-- Root -->
+        <text x="20" y="30" font-family="'Space Grotesk', sans-serif" font-size="14" font-weight="700" fill="#d32f2f">project-root/</text>
+        
+        <!-- Main vertical line -->
+        <line x1="20" y1="45" x2="20" y2="360" stroke="#bdbdbd" stroke-width="2"/>
+        
+        <!-- playwright.config.ts -->
+        <line x1="20" y1="60" x2="45" y2="60" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="65" font-family="'JetBrains Mono', monospace" font-size="12" fill="#212121">playwright.config.ts</text>
+        
+        <!-- tsconfig.json -->
+        <line x1="20" y1="85" x2="45" y2="85" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="90" font-family="'JetBrains Mono', monospace" font-size="12" fill="#212121">tsconfig.json</text>
+        
+        <!-- package.json -->
+        <line x1="20" y1="110" x2="45" y2="110" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="115" font-family="'JetBrains Mono', monospace" font-size="12" fill="#212121">package.json</text>
+        
+        <!-- tests/ folder -->
+        <line x1="20" y1="145" x2="45" y2="145" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="150" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#1565c0">tests/</text>
+        
+        <!-- tests vertical line -->
+        <line x1="50" y1="158" x2="50" y2="245" stroke="#d0d0d0" stroke-width="1.5"/>
+        
+        <!-- specs/ subfolder -->
+        <line x1="50" y1="173" x2="75" y2="173" stroke="#d0d0d0" stroke-width="1.5"/>
+        <text x="80" y="178" font-family="'JetBrains Mono', monospace" font-size="11" fill="#424242">specs/</text>
+        
+        <!-- specs vertical line -->
+        <line x1="80" y1="185" x2="80" y2="218" stroke="#e0e0e0" stroke-width="1.2"/>
+        
+        <!-- login.spec.ts -->
+        <line x1="80" y1="195" x2="105" y2="195" stroke="#e0e0e0" stroke-width="1.2"/>
+        <text x="110" y="200" font-family="'JetBrains Mono', monospace" font-size="10" fill="#616161">login.spec.ts</text>
+        
+        <!-- dashboard.spec.ts -->
+        <line x1="80" y1="215" x2="105" y2="215" stroke="#e0e0e0" stroke-width="1.2"/>
+        <text x="110" y="220" font-family="'JetBrains Mono', monospace" font-size="10" fill="#616161">dashboard.spec.ts</text>
+        
+        <!-- fixtures/ subfolder -->
+        <line x1="50" y1="240" x2="75" y2="240" stroke="#d0d0d0" stroke-width="1.5"/>
+        <text x="80" y="245" font-family="'JetBrains Mono', monospace" font-size="11" fill="#424242">fixtures/</text>
+        
+        <!-- auth.fixture.ts -->
+        <line x1="80" y1="255" x2="105" y2="255" stroke="#e0e0e0" stroke-width="1.2"/>
+        <text x="110" y="260" font-family="'JetBrains Mono', monospace" font-size="10" fill="#616161">auth.fixture.ts</text>
+        
+        <!-- pages/ folder -->
+        <line x1="20" y1="285" x2="45" y2="285" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="290" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#1565c0">pages/</text>
+        
+        <!-- pages vertical line -->
+        <line x1="50" y1="298" x2="50" y2="330" stroke="#d0d0d0" stroke-width="1.5"/>
+        
+        <!-- LoginPage.ts -->
+        <line x1="50" y1="308" x2="75" y2="308" stroke="#d0d0d0" stroke-width="1.5"/>
+        <text x="80" y="313" font-family="'JetBrains Mono', monospace" font-size="10" fill="#616161">LoginPage.ts</text>
+        
+        <!-- DashboardPage.ts -->
+        <line x1="50" y1="328" x2="75" y2="328" stroke="#d0d0d0" stroke-width="1.5"/>
+        <text x="80" y="333" font-family="'JetBrains Mono', monospace" font-size="10" fill="#616161">DashboardPage.ts</text>
+        
+        <!-- test-data/ folder -->
+        <line x1="20" y1="360" x2="45" y2="360" stroke="#bdbdbd" stroke-width="2"/>
+        <text x="50" y="365" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#1565c0">test-data/</text>
+      </svg>
+      <div class="diagram-label">Figure 2.1 — Recommended project structure</div>
+    </div>
+
+    <h3>Structure Review for Playwright 1.50+</h3>
+    <ul>
+      <li>Current structure is solid for a starter suite: clear separation of <code class="inline">specs</code>, <code class="inline">fixtures</code>, and <code class="inline">pages</code>.</li>
+      <li>Add a dedicated auth setup flow (for example <code class="inline">tests/setup/auth.setup.ts</code>) and store reusable auth state under <code class="inline">playwright/.auth/</code>.</li>
+      <li>Keep generated artifacts out of source control: <code class="inline">playwright-report/</code>, <code class="inline">test-results/</code>, and <code class="inline">blob-report/</code>.</li>
+      <li>Use <code class="inline">test-data/</code> for static fixtures, and add data factories for dynamic or randomized test inputs.</li>
+    </ul>
+
+    <h2>Playwright Configuration</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">playwright.config.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">defineConfig</span><span class="punc">,</span> <span class="type">devices</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="kw">export default</span> <span class="fn">defineConfig</span><span class="punc">({</span>
+  <span class="prop">testDir</span><span class="punc">:</span> <span class="str">'./tests/specs'</span><span class="punc">,</span>
+  <span class="prop">fullyParallel</span><span class="punc">:</span> <span class="kw">true</span><span class="punc">,</span>
+  <span class="prop">forbidOnly</span><span class="punc">:</span> <span class="op">!!</span>process<span class="punc">.</span>env<span class="punc">.</span><span class="prop">CI</span><span class="punc">,</span>
+  <span class="prop">retries</span><span class="punc">:</span> process<span class="punc">.</span>env<span class="punc">.</span><span class="prop">CI</span> <span class="op">?</span> <span class="num">2</span> <span class="op">:</span> <span class="num">0</span><span class="punc">,</span>
+  <span class="prop">workers</span><span class="punc">:</span> process<span class="punc">.</span>env<span class="punc">.</span><span class="prop">CI</span> <span class="op">?</span> <span class="num">4</span> <span class="op">:</span> <span class="str">'80%'</span><span class="punc">,</span>
+  <span class="prop">reporter</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">[</span><span class="str">'html'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">open</span><span class="punc">:</span> <span class="str">'never'</span> <span class="punc">}],</span>
+    <span class="punc">[</span><span class="str">'json'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">outputFile</span><span class="punc">:</span> <span class="str">'results.json'</span> <span class="punc">}],</span>
+  <span class="punc">],</span>
+  <span class="prop">use</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="prop">baseURL</span><span class="punc">:</span> <span class="str">'http://localhost:3000'</span><span class="punc">,</span>
+    <span class="prop">trace</span><span class="punc">:</span> <span class="str">'on-first-retry'</span><span class="punc">,</span>
+    <span class="prop">screenshot</span><span class="punc">:</span> <span class="str">'only-on-failure'</span><span class="punc">,</span>
+    <span class="prop">video</span><span class="punc">:</span> <span class="str">'retain-on-failure'</span><span class="punc">,</span>
+    <span class="prop">locale</span><span class="punc">:</span> <span class="str">'en-US'</span><span class="punc">,</span>
+    <span class="prop">timezoneId</span><span class="punc">:</span> <span class="str">'America/New_York'</span><span class="punc">,</span>
+  <span class="punc">},</span>
+  <span class="prop">projects</span><span class="punc">:</span> <span class="punc">[</span>
+    <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'chromium'</span><span class="punc">,</span> <span class="prop">use</span><span class="punc">:</span> <span class="punc">{</span> <span class="punc">...</span>devices<span class="punc">[</span><span class="str">'Desktop Chrome'</span><span class="punc">]</span> <span class="punc">}</span> <span class="punc">},</span>
+    <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'firefox'</span><span class="punc">,</span> <span class="prop">use</span><span class="punc">:</span> <span class="punc">{</span> <span class="punc">...</span>devices<span class="punc">[</span><span class="str">'Desktop Firefox'</span><span class="punc">]</span> <span class="punc">}</span> <span class="punc">},</span>
+    <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'mobile'</span><span class="punc">,</span> <span class="prop">use</span><span class="punc">:</span> <span class="punc">{</span> <span class="punc">...</span>devices<span class="punc">[</span><span class="str">'iPhone 14'</span><span class="punc">]</span> <span class="punc">}</span> <span class="punc">},</span>
+  <span class="punc">],</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Use <code class="inline">workers: '80%'</code> in local development to leave CPU headroom for the app being tested. In CI, use a fixed number based on available cores.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">5</span>
+  </div>
+
+  <!-- ==================== CHAPTER 3 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 03</div>
+      <div class="chapter-title">Locators & Selectors Deep Dive</div>
+    </div>
+
+    <p>Playwright's locator system is the backbone of reliable test interaction. Unlike CSS selectors or XPath, Playwright's locators are resilient to DOM structure changes and align with how users perceive the page.</p>
+
+    <h2>Locator Priority Order</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Priority pyramid -->
+        <polygon points="260,10 390,185 130,185" fill="none" stroke="#e63946" stroke-width="2" opacity="0.3"/>
+        <polygon points="260,40 360,165 160,165" fill="#2ecc71" opacity="0.08"/>
+        <polygon points="260,70 330,145 190,145" fill="#3498db" opacity="0.08"/>
+        <polygon points="260,100 300,125 220,125" fill="#f39c12" opacity="0.08"/>
+        <polygon points="260,125 275,110 245,110" fill="#e63946" opacity="0.08"/>
+
+        <!-- Locator labels -->
+        <text x="260" y="30" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="10" fill="#2ecc71">getByRole()</text>
+        <text x="260" y="60" text-anchor="middle" font-family="Space Grotesk" font-weight="600" font-size="9" fill="#1a1a2e">User-facing locators</text>
+        <text x="260" y="73" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#4a4a6a" font-style="italic">getByText, getByLabel, getByPlaceholder...</text>
+        <text x="260" y="95" text-anchor="middle" font-family="Space Grotesk" font-weight="500" font-size="9" fill="#f39c12">getByTestId()</text>
+        <text x="260" y="120" text-anchor="middle" font-family="Space Grotesk" font-weight="400" font-size="8" fill="#e63946">CSS / XPath</text>
+
+        <!-- Side annotations -->
+        <text x="400" y="28" font-family="DM Sans" font-size="8" fill="#2ecc71" font-weight="600">✓ User-facing</text>
+        <line x1="390" y1="25" x2="300" y2="25" stroke="#2ecc71" stroke-width="0.8" stroke-dasharray="3,2"/>
+        
+        <text x="400" y="97" font-family="DM Sans" font-size="7" fill="#f39c12">Resilient, not user-facing</text>
+        <line x1="390" y1="95" x2="305" y2="95" stroke="#f39c12" stroke-width="0.8" stroke-dasharray="3,2"/>
+        
+        <text x="400" y="180" font-family="DM Sans" font-size="8" fill="#e63946" font-weight="600">✗ Implementation-coupled</text>
+        <line x1="390" y1="177" x2="350" y2="165" stroke="#e63946" stroke-width="0.8" stroke-dasharray="3,2"/>
+      </svg>
+      <div class="diagram-label">Figure 3.1 — Locator priority pyramid (1.50+ best practices)</div>
+    </div>
+
+    <div class="callout callout-info">
+      <i class="fas fa-circle-info"></i>
+      <div class="callout-content"><strong>Philosophy:</strong> While <code class="inline">getByTestId()</code> is highly resilient to DOM changes, Playwright prioritizes <strong>user-facing locators</strong> (role, text, label, etc.) that reflect how users and assistive technology interact with your app. Use test IDs only when you can't locate by user-facing attributes. This ensures tests align with actual user experience rather than implementation details.</div>
+    </div>
+
+    <h2>Locator Methods</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Use Case</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="inline">getByRole()</code></td><td>Buttons, links, form elements by ARIA role</td><td>page.getByRole('button', { name: 'Submit' })</td></tr>
+          <tr><td><code class="inline">getByText()</code></td><td>Find by visible text content</td><td>page.getByText('Welcome back')</td></tr>
+          <tr><td><code class="inline">getByLabel()</code></td><td>Form inputs associated with a label</td><td>page.getByLabel('Email address')</td></tr>
+          <tr><td><code class="inline">getByPlaceholder()</code></td><td>Inputs with placeholder text</td><td>page.getByPlaceholder('Enter name')</td></tr>
+          <tr><td><code class="inline">getByTestId()</code></td><td>Elements with data-testid attribute</td><td>page.getByTestId('submit-btn')</td></tr>
+          <tr><td><code class="inline">getByAltText()</code></td><td>Images and media by alt text</td><td>page.getByAltText('Company logo')</td></tr>
+          <tr><td><code class="inline">getByTitle()</code></td><td>Elements with title attribute</td><td>page.getByTitle('Close dialog')</td></tr>
+          <tr><td><code class="inline">locator()</code></td><td>CSS or XPath selector (fallback)</td><td>page.locator('.card > .title')</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Chaining & Filtering</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">locators-chain.ts</span>
+      </div>
+      <pre><code><span class="cm">// Chain locators to narrow down to specific elements</span>
+<span class="kw">const</span> row <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'row'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'John Doe'</span> <span class="punc">});</span>
+<span class="kw">await</span> row<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Delete'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+
+<span class="cm">// Filter by child text content</span>
+<span class="kw">const</span> items <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'listitem'</span><span class="punc">).</span><span class="fn">filter</span><span class="punc">({</span> <span class="prop">hasText</span><span class="punc">:</span> <span class="str">'In Stock'</span> <span class="punc">});</span>
+
+<span class="cm">// Filter by having a child element</span>
+<span class="kw">const</span> cards <span class="op">=</span> page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.card'</span><span class="punc">).</span><span class="fn">filter</span><span class="punc">({</span>
+  <span class="prop">has</span><span class="punc">:</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'img'</span><span class="punc">)</span>
+<span class="punc">});</span>
+
+<span class="cm">// Nth element (0-indexed)</span>
+<span class="kw">const</span> firstItem <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'listitem'</span><span class="punc">).</span><span class="fn">nth</span><span class="punc">(</span><span class="num">0</span><span class="punc">);</span>
+<span class="kw">const</span> lastItem <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'listitem'</span><span class="punc">).</span><span class="fn">last</span><span class="punc">();</span></code></pre>
+    </div>
+
+    <div class="callout callout-warn">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div class="callout-content"><strong>Avoid <code class="inline">.nth()</code> when possible.</strong> It couples your test to DOM order. Prefer filtering by text content or using <code class="inline">data-testid</code> for unique identification.</div>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Configure a custom test id attribute once with <code class="inline">testIdAttribute</code> in config so locator strategy stays consistent across teams and apps.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">8</span>
+  </div>
+
+  <!-- ==================== CHAPTER 4 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 04</div>
+      <div class="chapter-title">Interactions & User Simulations</div>
+    </div>
+
+    <h2>Core Interactions</h2>
+    <p>Every interaction in Playwright automatically performs actionability checks: the element must be visible, stable, receive events, and not be obscured by other elements.</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">interactions.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">test</span><span class="punc">,</span> <span class="fn">expect</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'form submission flow'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/contact'</span><span class="punc">);</span>
+
+  <span class="cm">// Text input</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Name'</span><span class="punc">).</span><span class="fn">fill</span><span class="punc">(</span><span class="str">'Jane Smith'</span><span class="punc">);</span>
+
+  <span class="cm">// Clear and enter text (locator.type is deprecated in modern Playwright)</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">).</span><span class="fn">clear</span><span class="punc">();</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">).</span><span class="fn">fill</span><span class="punc">(</span><span class="str">'jane@example.com'</span><span class="punc">);</span>
+
+  <span class="cm">// Select dropdown option</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Category'</span><span class="punc">).</span><span class="fn">selectOption</span><span class="punc">(</span><span class="str">'support'</span><span class="punc">);</span>
+
+  <span class="cm">// Checkbox and radio</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Accept terms'</span><span class="punc">).</span><span class="fn">check</span><span class="punc">();</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Priority: High'</span><span class="punc">).</span><span class="fn">check</span><span class="punc">();</span>
+
+  <span class="cm">// File upload</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Attachment'</span><span class="punc">).</span><span class="fn">setInputFiles</span><span class="punc">(</span><span class="str">'./fixtures/doc.pdf'</span><span class="punc">);</span>
+
+  <span class="cm">// Submit</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Send'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+
+  <span class="cm">// Verify success</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Message sent!'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Advanced Mouse & Keyboard</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">advanced-interactions.ts</span>
+      </div>
+      <pre><code><span class="cm">// Drag and drop</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'#source'</span><span class="punc">).</span><span class="fn">dragTo</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'#target'</span><span class="punc">));</span>
+
+<span class="cm">// Hover and click nested menu</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'link'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Products'</span> <span class="punc">}).</span><span class="fn">hover</span><span class="punc">();</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'link'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Electronics'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+
+<span class="cm">// Keyboard shortcuts</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">keyboard</span><span class="punc">.</span><span class="fn">press</span><span class="punc">(</span><span class="str">'Control+a'</span><span class="punc">);</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">keyboard</span><span class="punc">.</span><span class="fn">press</span><span class="punc">(</span><span class="str">'Control+c'</span><span class="punc">);</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">keyboard</span><span class="punc">.</span><span class="fn">insertText</span><span class="punc">(</span><span class="str">'Pasted content'</span><span class="punc">);</span>
+
+<span class="cm">// Multi-select with Shift+Click</span>
+<span class="kw">await</span> item1<span class="punc">.</span><span class="fn">click</span><span class="punc">();</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">keyboard</span><span class="punc">.</span><span class="fn">down</span><span class="punc">(</span><span class="str">'Shift'</span><span class="punc">);</span>
+<span class="kw">await</span> item5<span class="punc">.</span><span class="fn">click</span><span class="punc">();</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">keyboard</span><span class="punc">.</span><span class="fn">up</span><span class="punc">(</span><span class="str">'Shift'</span><span class="punc">);</span></code></pre>
+    </div>
+
+    <h2>Interaction Lifecycle</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 500 100" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="25" width="80" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="50" y="48" text-anchor="middle" fill="white" font-family="JetBrains Mono" font-size="7" font-weight="600">Wait for</text>
+        <text x="50" y="62" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono" font-size="7">visible</text>
+
+        <text x="105" y="55" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="115" y="25" width="80" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="155" y="48" text-anchor="middle" fill="white" font-family="JetBrains Mono" font-size="7" font-weight="600">Check</text>
+        <text x="155" y="62" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono" font-size="7">stable</text>
+
+        <text x="210" y="55" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="220" y="25" width="80" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="260" y="48" text-anchor="middle" fill="white" font-family="JetBrains Mono" font-size="7" font-weight="600">Check</text>
+        <text x="260" y="62" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono" font-size="7">enabled</text>
+
+        <text x="315" y="55" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="325" y="25" width="80" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="365" y="48" text-anchor="middle" fill="white" font-family="JetBrains Mono" font-size="7" font-weight="600">Check</text>
+        <text x="365" y="62" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono" font-size="7">receives events</text>
+
+        <text x="420" y="55" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="430" y="25" width="60" height="50" rx="6" fill="#e63946"/>
+        <text x="460" y="48" text-anchor="middle" fill="white" font-family="JetBrains Mono" font-size="7" font-weight="600">Execute</text>
+        <text x="460" y="62" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="JetBrains Mono" font-size="7">action</text>
+      </svg>
+      <div class="diagram-label">Figure 4.1 — Actionability checks performed before every interaction</div>
+    </div>
+
+    <div class="callout callout-info">
+      <i class="fas fa-circle-info"></i>
+      <div class="callout-content"><strong>Force option:</strong> Use <code class="inline">.click({ force: true })</code> only as a last resort. It bypasses all actionability checks and can lead to hidden flakiness.</div>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Prefer user-intent APIs such as <code class="inline">fill</code>, <code class="inline">selectOption</code>, and role-based clicks over low-level mouse coordinates for better stability.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">11</span>
+  </div>
+
+  <!-- ==================== CHAPTER 5 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 05</div>
+      <div class="chapter-title">Assertions & Verification</div>
+    </div>
+
+    <p>Playwright includes a rich assertion library built on top of expect. Unlike simple assertions, Playwright's assertions automatically retry until the condition is met or a timeout is reached, eliminating timing-related flakiness.</p>
+
+    <h2>Auto-Retrying Assertions</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">assertions.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">test</span><span class="punc">,</span> <span class="fn">expect</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'dashboard loads with data'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">);</span>
+
+  <span class="cm">// Visibility assertions (auto-retry)</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Revenue'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Loading...'</span><span class="punc">)).</span><span class="fn">toBeHidden</span><span class="punc">();</span>
+
+  <span class="cm">// Text content assertions</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.total'</span><span class="punc">)).</span><span class="fn">toHaveText</span><span class="punc">(</span><span class="str">'$12,450'</span><span class="punc">);</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.total'</span><span class="punc">)).</span><span class="fn">toContainText</span><span class="punc">(</span><span class="str">'$12'</span><span class="punc">);</span>
+
+  <span class="cm">// Attribute & class assertions</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">)).</span><span class="fn">toHaveAttribute</span><span class="punc">(</span><span class="str">'disabled'</span><span class="punc">);</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.alert'</span><span class="punc">)).</span><span class="fn">toHaveClass</span><span class="punc">(</span><span class="str">/error/</span><span class="punc">);</span>
+
+  <span class="cm">// Count assertions</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'row'</span><span class="punc">)).</span><span class="fn">toHaveCount</span><span class="punc">(</span><span class="num">25</span><span class="punc">);</span>
+
+  <span class="cm">// State assertions</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">)).</span><span class="fn">toBeEnabled</span><span class="punc">();</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">)).</span><span class="fn">toBeFocused</span><span class="punc">();</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Terms'</span><span class="punc">)).</span><span class="fn">toBeChecked</span><span class="punc">();</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Page-Level Assertions</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">page-assertions.ts</span>
+      </div>
+      <pre><code><span class="cm">// URL assertions</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveURL</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">);</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveURL</span><span class="punc">(</span><span class="str">/\/dashboard\/\d+/</span><span class="punc">);</span>
+
+<span class="cm">// Title assertion</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveTitle</span><span class="punc">(</span><span class="str">'Dashboard - My App'</span><span class="punc">);</span>
+
+<span class="cm">// Screenshot comparison</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveScreenshot</span><span class="punc">(</span><span class="str">'dashboard.png'</span><span class="punc">);</span>
+
+<span class="cm">// Custom timeout for slow operations</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Processed'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">({</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">30_000</span> <span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Soft Assertions</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">soft-assertions.ts</span>
+      </div>
+      <pre><code><span class="cm">// Soft assertions collect all failures instead of failing on first</span>
+<span class="fn">test</span><span class="punc">(</span><span class="str">'validate all dashboard cards'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">);</span>
+
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">.</span><span class="fn">soft</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Revenue'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">.</span><span class="fn">soft</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Users'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">.</span><span class="fn">soft</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Orders'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+  <span class="cm">// Test continues even if some assertions fail</span>
+  <span class="cm">// All failures reported at the end</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Prefer auto-retrying assertions</strong> over manual waits. Instead of <code class="inline">await page.waitForSelector()</code> + <code class="inline">expect(...).toBeTruthy()</code>, use <code class="inline">await expect(locator).toBeVisible()</code> directly.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">14</span>
+  </div>
+
+  <!-- ==================== CHAPTER 6 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 06</div>
+      <div class="chapter-title">Page Objects & Test Composition</div>
+    </div>
+
+    <p>The Page Object Model (POM) encapsulates page structure and interactions into reusable classes. Modern Playwright favors <strong>composition over inheritance</strong>, integrating page objects with fixtures for flexible test orchestration.</p>
+
+    <h2>Modern POM Pattern (Composition-Based)</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Test layer -->
+        <rect x="170" y="5" width="200" height="35" rx="6" fill="#e63946"/>
+        <text x="270" y="27" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="700" font-size="11">Test Spec</text>
+        <line x1="270" y1="40" x2="270" y2="60" stroke="#e63946" stroke-width="1.5"/>
+        <text x="280" y="55" fill="#e63946" font-size="9">&#x25BC;</text>
+
+        <!-- Fixture layer -->
+        <rect x="150" y="60" width="240" height="35" rx="6" fill="#9b59b6" opacity="0.9"/>
+        <text x="270" y="82" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="10">Playwright Fixtures</text>
+        <text x="270" y="92" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="DM Sans" font-size="7">page, context, browser...</text>
+        
+        <line x1="220" y1="95" x2="180" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
+        <line x1="270" y1="95" x2="270" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
+        <line x1="320" y1="95" x2="360" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
+        
+        <text x="190" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
+        <text x="280" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
+        <text x="370" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
+
+        <!-- Page Object layer (flat, independent) -->
+        <rect x="20" y="125" width="150" height="35" rx="6" fill="#3498db"/>
+        <text x="95" y="147" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="10">LoginPage</text>
+        
+        <rect x="195" y="125" width="150" height="35" rx="6" fill="#3498db"/>
+        <text x="270" y="147" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="10">DashboardPage</text>
+        
+        <rect x="370" y="125" width="150" height="35" rx="6" fill="#3498db"/>
+        <text x="445" y="147" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="10">CheckoutPage</text>
+        
+        <!-- Arrows down to Playwright API -->
+        <line x1="95" y1="160" x2="95" y2="180" stroke="#3498db" stroke-width="1.2"/>
+        <line x1="270" y1="160" x2="270" y2="180" stroke="#3498db" stroke-width="1.2"/>
+        <line x1="445" y1="160" x2="445" y2="180" stroke="#3498db" stroke-width="1.2"/>
+        
+        <line x1="95" y1="180" x2="270" y2="180" stroke="#3498db" stroke-width="1.2"/>
+        <line x1="270" y1="180" x2="445" y2="180" stroke="#3498db" stroke-width="1.2"/>
+        <line x1="270" y1="180" x2="270" y2="192" stroke="#3498db" stroke-width="1.5"/>
+        <text x="280" y="190" fill="#3498db" font-size="9">&#x25BC;</text>
+
+        <!-- Playwright API -->
+        <rect x="150" y="192" width="240" height="25" rx="4" fill="#f0f0f8" stroke="#3178c6" stroke-width="1"/>
+        <text x="270" y="209" text-anchor="middle" fill="#3178c6" font-family="JetBrains Mono" font-size="9" font-weight="600">Playwright Page API</text>
+      </svg>
+      <div class="diagram-label">Figure 6.1 — Modern POM with composition (Playwright 1.50+)</div>
+    </div>
+
+    <div class="callout callout-info">
+      <i class="fas fa-circle-info"></i>
+      <div class="callout-content"><strong>Composition vs Inheritance:</strong> Modern Playwright recommends <strong>flat page objects</strong> that receive the <code class="inline">page</code> fixture via constructor injection, avoiding complex inheritance hierarchies. Each page object is independent and composed into tests via fixtures. This provides better flexibility, testability, and aligns with Playwright's fixture-based architecture. The traditional <code class="inline">BasePage</code> inheritance pattern (common in Selenium) is still valid but less idiomatic in Playwright's ecosystem.</div>
+    </div>
+
+    <h2>Modern LoginPage (Composition Pattern)</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">pages/LoginPage.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="type">Page</span><span class="punc">,</span> <span class="type">Locator</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="kw">export</span> <span class="kw">class</span> <span class="type">LoginPage</span> <span class="punc">{</span>
+  <span class="kw">readonly</span> page<span class="punc">:</span> <span class="type">Page</span><span class="punc">;</span>
+  <span class="kw">readonly</span> emailInput<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+  <span class="kw">readonly</span> passwordInput<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+  <span class="kw">readonly</span> submitButton<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+  <span class="kw">readonly</span> errorMessage<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+
+  <span class="fn">constructor</span><span class="punc">(</span>page<span class="punc">:</span> <span class="type">Page</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">this</span><span class="punc">.</span>page <span class="op">=</span> page<span class="punc">;</span>
+    <span class="kw">this</span><span class="punc">.</span>emailInput <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">);</span>
+    <span class="kw">this</span><span class="punc">.</span>passwordInput <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Password'</span><span class="punc">);</span>
+    <span class="kw">this</span><span class="punc">.</span>submitButton <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Sign in'</span> <span class="punc">});</span>
+    <span class="kw">this</span><span class="punc">.</span>errorMessage <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'alert'</span><span class="punc">);</span>
+  <span class="punc">}</span>
+
+  <span class="kw">async</span> <span class="fn">goto</span><span class="punc">()</span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/login'</span><span class="punc">);</span>
+  <span class="punc">}</span>
+
+  <span class="kw">async</span> <span class="fn">login</span><span class="punc">(</span>email<span class="punc">:</span> <span class="type">string</span><span class="punc">,</span> password<span class="punc">:</span> <span class="type">string</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>emailInput<span class="punc">.</span><span class="fn">fill</span><span class="punc">(</span>email<span class="punc">);</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>passwordInput<span class="punc">.</span><span class="fn">fill</span><span class="punc">(</span>password<span class="punc">);</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>submitButton<span class="punc">.</span><span class="fn">click</span><span class="punc">();</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></code></pre>
+    </div>
+
+    <h2>Traditional Pattern (BasePage Inheritance)</h2>
+    <p>While modern Playwright recommends composition, some teams (especially migrating from Selenium) use inheritance:</p>
+    
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">pages/BasePage.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="type">Page</span><span class="punc">,</span> <span class="type">Locator</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="kw">export</span> <span class="kw">class</span> <span class="type">BasePage</span> <span class="punc">{</span>
+  <span class="kw">readonly</span> page<span class="punc">:</span> <span class="type">Page</span><span class="punc">;</span>
+  <span class="kw">readonly</span> header<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+
+  <span class="fn">constructor</span><span class="punc">(</span>page<span class="punc">:</span> <span class="type">Page</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">this</span><span class="punc">.</span>page <span class="op">=</span> page<span class="punc">;</span>
+    <span class="kw">this</span><span class="punc">.</span>header <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'banner'</span><span class="punc">);</span>
+  <span class="punc">}</span>
+
+  <span class="kw">async</span> <span class="fn">navigate</span><span class="punc">(</span>path<span class="punc">:</span> <span class="type">string</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span>path<span class="punc">);</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></code></pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">pages/LoginPage.ts (with inheritance)</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="type">Page</span><span class="punc">,</span> <span class="type">Locator</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+<span class="kw">import</span> <span class="punc">{</span> <span class="type">BasePage</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'./BasePage'</span><span class="punc">;</span>
+
+<span class="kw">export</span> <span class="kw">class</span> <span class="type">LoginPage</span> <span class="kw">extends</span> <span class="type">BasePage</span> <span class="punc">{</span>
+  <span class="kw">readonly</span> emailInput<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+  <span class="kw">readonly</span> passwordInput<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+  <span class="kw">readonly</span> submitButton<span class="punc">:</span> <span class="type">Locator</span><span class="punc">;</span>
+
+  <span class="fn">constructor</span><span class="punc">(</span>page<span class="punc">:</span> <span class="type">Page</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">super</span><span class="punc">(</span>page<span class="punc">);</span>
+    <span class="kw">this</span><span class="punc">.</span>emailInput <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Email'</span><span class="punc">);</span>
+    <span class="kw">this</span><span class="punc">.</span>passwordInput <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByLabel</span><span class="punc">(</span><span class="str">'Password'</span><span class="punc">);</span>
+    <span class="kw">this</span><span class="punc">.</span>submitButton <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Sign in'</span> <span class="punc">});</span>
+  <span class="punc">}</span>
+
+  <span class="kw">async</span> <span class="fn">login</span><span class="punc">(</span>email<span class="punc">:</span> <span class="type">string</span><span class="punc">,</span> password<span class="punc">:</span> <span class="type">string</span><span class="punc">)</span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>emailInput<span class="punc">.</span><span class="fn">fill</span><span class="punc">(</span>email<span class="punc">);</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>passwordInput<span class="punc">.</span><span class="fn">fill</span><span class="punc">(</span>password<span class="punc">);</span>
+    <span class="kw">await</span> <span class="kw">this</span><span class="punc">.</span>submitButton<span class="punc">.</span><span class="fn">click</span><span class="punc">();</span>
+  <span class="punc">}</span>
+<span class="punc">}</span></code></pre>
+    </div>
+
+    <div class="callout callout-danger">
+      <i class="fas fa-skull-crossbones"></i>
+      <div class="callout-content"><strong>Anti-Pattern:</strong> Putting assertions inside Page Objects. POM classes should only encapsulate <em>actions</em> and <em>state queries</em>. Assertions belong in test specs for clear separation of concerns.</div>
+    </div>
+
+    <h2>Page Object Model vs Page Fixtures</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Aspect</th><th>Page Object Model (POM)</th><th>Page Fixtures</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Primary purpose</td><td>Encapsulate page-level UI behavior into reusable classes.</td><td>Provide test dependencies (pages, data, auth, APIs) through Playwright's fixture lifecycle.</td></tr>
+          <tr><td>Best for</td><td>Stable business flows used in many tests (login, checkout, admin actions).</td><td>Cross-cutting setup/teardown, shared state, environment wiring, and test composition.</td></tr>
+          <tr><td>Maintainability</td><td>High when page methods are cohesive and domain-oriented.</td><td>High for test orchestration, can become complex if over-nested.</td></tr>
+          <tr><td>Performance control</td><td>Neutral by itself.</td><td>Strong: worker-scoped fixtures, lazy creation, and reuse reduce suite time.</td></tr>
+          <tr><td>Common pitfall</td><td>Turning classes into mini test frameworks with assertions and branching logic.</td><td>Putting too much UI behavior inside fixtures instead of dedicated page objects.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Which Is Better?</h3>
+    <p>For most real-world test suites, <strong>the best approach is hybrid:</strong> use <strong>POM for UI behavior</strong> and <strong>fixtures for orchestration</strong>. If you must pick one, fixtures usually provide more architectural leverage because they manage lifecycle, dependency injection, and scaling across projects.</p>
+
+    <div class="callout callout-info">
+      <i class="fas fa-circle-info"></i>
+      <div class="callout-content"><strong>Recommendation:</strong> Keep page interactions in classes (POM) and compose those classes via fixtures. This gives clean APIs, faster suites, and less duplicated setup code.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">hybrid-pattern.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">test</span> <span class="kw">as</span> base<span class="punc">,</span> <span class="fn">expect</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+<span class="kw">import</span> <span class="punc">{</span> <span class="type">LoginPage</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'../pages/LoginPage'</span><span class="punc">;</span>
+
+<span class="kw">type</span> <span class="type">Fixtures</span> <span class="op">=</span> <span class="punc">{</span>
+  <span class="prop">loginPage</span><span class="punc">:</span> <span class="type">LoginPage</span><span class="punc">;</span>
+<span class="punc">};</span>
+
+<span class="kw">const</span> test <span class="op">=</span> base<span class="punc">.</span><span class="fn">extend</span><span class="punc">&lt;</span><span class="type">Fixtures</span><span class="punc">&gt;({</span>
+  <span class="prop">loginPage</span><span class="punc">:</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">},</span> use<span class="punc">)</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="fn">use</span><span class="punc">(</span><span class="kw">new</span> <span class="fn">LoginPage</span><span class="punc">(</span>page<span class="punc">));</span>
+  <span class="punc">},</span>
+<span class="punc">});</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'user can sign in'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> loginPage <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> loginPage<span class="punc">.</span><span class="fn">navigate</span><span class="punc">(</span><span class="str">'/login'</span><span class="punc">);</span>
+  <span class="kw">await</span> loginPage<span class="punc">.</span><span class="fn">login</span><span class="punc">(</span><span class="str">'user@test.com'</span><span class="punc">,</span> <span class="str">'secret'</span><span class="punc">);</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>loginPage<span class="punc">.</span>page<span class="punc">).</span><span class="fn">toHaveURL</span><span class="punc">(</span><span class="str">/dashboard/</span><span class="punc">);</span>
+<span class="punc">});</span></code></pre>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Keep Page Objects focused on reusable business actions, and let fixtures manage lifecycle concerns like auth, test data bootstrapping, and cleanup.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">17</span>
+  </div>
+
+  <!-- ==================== CHAPTER 7 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 07</div>
+      <div class="chapter-title">Handling Async & Waiting</div>
+    </div>
+
+    <p>Playwright's auto-waiting mechanism handles most timing scenarios automatically. However, understanding the waiting strategies is essential for complex async flows like polling, websockets, and long-running operations.</p>
+
+    <h2>Wait Strategies Comparison</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Strategy</th><th>When to Use</th><th>Risk Level</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Auto-wait (default)</td><td>Element visibility, stability before actions — built-in to all interactions</td><td style="color:#2ecc71;font-weight:600">None</td></tr>
+          <tr><td><code class="inline">expect(locator).toBeVisible()</code></td><td>Explicit assertions with auto-retry for dynamic content</td><td style="color:#2ecc71;font-weight:600">Low</td></tr>
+          <tr><td><code class="inline">page.waitForLoadState()</code></td><td>Wait for page lifecycle events (load, domcontentloaded, networkidle)</td><td style="color:#2ecc71;font-weight:600">Low</td></tr>
+          <tr><td><code class="inline">page.waitForURL()</code></td><td>Wait for navigation to specific URL or pattern</td><td style="color:#2ecc71;font-weight:600">Low</td></tr>
+          <tr><td><code class="inline">page.waitForResponse()</code></td><td>Wait for specific API responses during user actions</td><td style="color:#f39c12;font-weight:600">Medium</td></tr>
+          <tr><td><code class="inline">page.waitForFunction()</code></td><td>Custom JavaScript conditions (use sparingly)</td><td style="color:#f39c12;font-weight:600">Medium</td></tr>
+          <tr><td><code class="inline">page.waitForTimeout()</code></td><td>Debugging only — never in production tests</td><td style="color:#e63946;font-weight:600">High</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Waiting for Network Responses</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">network-wait.ts</span>
+      </div>
+      <pre><code><span class="fn">test</span><span class="punc">(</span><span class="str">'wait for API then verify UI'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="cm">// Start waiting for response before triggering action</span>
+  <span class="kw">const</span> responsePromise <span class="op">=</span> page<span class="punc">.</span><span class="fn">waitForResponse</span><span class="punc">(</span><span class="str">'**/api/users'</span><span class="punc">);</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Load Users'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+  <span class="kw">const</span> response <span class="op">=</span> <span class="kw">await</span> responsePromise<span class="punc">;</span>
+
+  <span class="cm">// Verify the response data</span>
+  <span class="kw">const</span> body <span class="op">=</span> <span class="kw">await</span> response<span class="punc">.</span><span class="fn">json</span><span class="punc">();</span>
+  <span class="fn">expect</span><span class="punc">(</span>body<span class="punc">.</span>users<span class="punc">).</span><span class="fn">toHaveLength</span><span class="punc">(</span><span class="num">10</span><span class="punc">);</span>
+
+  <span class="cm">// Wait for response with specific status</span>
+  <span class="kw">const</span> createPromise <span class="op">=</span> page<span class="punc">.</span><span class="fn">waitForResponse</span><span class="punc">(</span>
+    <span class="punc">resp</span> <span class="op">=></span> resp<span class="punc">.</span><span class="fn">url</span><span class="punc">().</span><span class="fn">includes</span><span class="punc">(</span><span class="str">'/api/orders'</span><span class="punc">)</span>
+      <span class="op">&&</span> resp<span class="punc">.</span><span class="fn">status</span><span class="punc">()</span> <span class="op">===</span> <span class="num">201</span>
+  <span class="punc">);</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Place Order'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+  <span class="kw">await</span> createPromise<span class="punc">;</span>
+<span class="punc">});</span>
+
+<span class="cm">// Wait for multiple requests/responses together</span>
+<span class="fn">test</span><span class="punc">(</span><span class="str">'wait for parallel API calls'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">const</span> <span class="punc">[</span>usersResp<span class="punc">,</span> settingsResp<span class="punc">]</span> <span class="op">=</span> <span class="kw">await</span> Promise<span class="punc">.</span><span class="fn">all</span><span class="punc">([</span>
+    page<span class="punc">.</span><span class="fn">waitForResponse</span><span class="punc">(</span><span class="str">'**/api/users'</span><span class="punc">),</span>
+    page<span class="punc">.</span><span class="fn">waitForResponse</span><span class="punc">(</span><span class="str">'**/api/settings'</span><span class="punc">),</span>
+    page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">)</span>
+  <span class="punc">]);</span>
+  <span class="fn">expect</span><span class="punc">(</span>usersResp<span class="punc">.</span><span class="fn">ok</span><span class="punc">()).</span><span class="fn">toBe</span><span class="punc">(</span><span class="kw">true</span><span class="punc">);</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Navigation & Load State Waiting</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">load-state.ts</span>
+      </div>
+      <pre><code><span class="cm">// Wait for specific load states</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">);</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">waitForLoadState</span><span class="punc">(</span><span class="str">'networkidle'</span><span class="punc">);</span> <span class="cm">// All network connections idle</span>
+
+<span class="cm">// Wait for URL to match pattern</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'link'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Settings'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">waitForURL</span><span class="punc">(</span><span class="str">'**/settings'</span><span class="punc">);</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveURL</span><span class="punc">(</span><span class="reg">/\/settings$/</span><span class="punc">);</span>
+
+<span class="cm">// Wait for DOM to be ready (faster than 'load')</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/heavy-page'</span><span class="punc">);</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">waitForLoadState</span><span class="punc">(</span><span class="str">'domcontentloaded'</span><span class="punc">);</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'heading'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span></code></pre>
+    </div>
+
+    <h2>Custom Conditions & Polling</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">custom-waiting.ts</span>
+      </div>
+      <pre><code><span class="cm">// Prefer locator assertions over waitForFunction</span>
+<span class="kw">const</span> tasks <span class="op">=</span> page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.task-item'</span><span class="punc">);</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>tasks<span class="punc">).</span><span class="fn">toHaveCount</span><span class="punc">(</span><span class="num">5</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">10000</span> <span class="punc">});</span>
+
+<span class="cm">// Wait for custom JavaScript condition (use sparingly)</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">waitForFunction</span><span class="punc">(</span>
+  <span class="punc">()</span> <span class="op">=></span> <span class="punc">(</span>window <span class="kw">as</span> <span class="kw">any</span><span class="punc">).</span>appState <span class="op">===</span> <span class="str">'initialized'</span><span class="punc">,</span>
+  <span class="punc">{</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">5000</span> <span class="punc">}</span>
+<span class="punc">);</span>
+
+<span class="cm">// Wait for element count to change dynamically</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">waitForFunction</span><span class="punc">(</span>
+  <span class="punc">(</span>minCount<span class="punc">)</span> <span class="op">=></span> document<span class="punc">.</span><span class="fn">querySelectorAll</span><span class="punc">(</span><span class="str">'.notification'</span><span class="punc">).</span>length <span class="op">>=</span> minCount<span class="punc">,</span>
+  <span class="num">3</span> <span class="cm">// Pass argument to function</span>
+<span class="punc">);</span>
+
+<span class="cm">// Wait for WebSocket connection</span>
+<span class="kw">const</span> wsPromise <span class="op">=</span> page<span class="punc">.</span><span class="fn">waitForEvent</span><span class="punc">(</span><span class="str">'websocket'</span><span class="punc">,</span> <span class="punc">{</span>
+  <span class="prop">predicate</span><span class="punc">:</span> ws <span class="op">=></span> ws<span class="punc">.</span><span class="fn">url</span><span class="punc">().</span><span class="fn">includes</span><span class="punc">(</span><span class="str">'/ws/updates'</span><span class="punc">)</span>
+<span class="punc">});</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Connect'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">();</span>
+<span class="kw">const</span> ws <span class="op">=</span> <span class="kw">await</span> wsPromise<span class="punc">;</span></code></pre>
+    </div>
+
+    <h2>Timeout Configuration (Playwright 1.50+)</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">timeout-config.ts</span>
+      </div>
+      <pre><code><span class="cm">// Per-assertion timeout</span>
+<span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Loading...'</span><span class="punc">)).</span><span class="fn">toBeHidden</span><span class="punc">({</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">15000</span> <span class="punc">});</span>
+
+<span class="cm">// Per-action timeout</span>
+<span class="kw">await</span> page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'button'</span><span class="punc">,</span> <span class="punc">{</span> <span class="prop">name</span><span class="punc">:</span> <span class="str">'Submit'</span> <span class="punc">}).</span><span class="fn">click</span><span class="punc">({</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">10000</span> <span class="punc">});</span>
+
+<span class="cm">// Set default timeout for test</span>
+<span class="fn">test</span><span class="punc">.</span><span class="fn">setTimeout</span><span class="punc">(</span><span class="num">60000</span><span class="punc">);</span> <span class="cm">// 60 seconds for entire test</span>
+
+<span class="cm">// Configure action and navigation timeouts in config</span>
+<span class="kw">export</span> <span class="kw">default</span> <span class="fn">defineConfig</span><span class="punc">({</span>
+  <span class="prop">use</span><span class="punc">:</span> <span class="punc">{</span>
+    <span class="prop">actionTimeout</span><span class="punc">:</span> <span class="num">10000</span><span class="punc">,</span>      <span class="cm">// Default for clicks, fills, etc.</span>
+    <span class="prop">navigationTimeout</span><span class="punc">:</span> <span class="num">30000</span><span class="punc">,</span> <span class="cm">// Default for page.goto()</span>
+  <span class="punc">}</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <div class="callout callout-danger">
+      <i class="fas fa-ban"></i>
+      <div class="callout-content"><strong>Never use <code class="inline">waitForTimeout()</code> in production tests.</strong> Hard-coded waits make tests slow and flaky. If the app responds faster, you waste time. If slower, the test fails. Always use condition-based waiting.</div>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Wait for user-visible outcomes (UI state, response predicates, or URL/title assertions) instead of implementation timing details.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">20</span>
+  </div>
+
+  <!-- ==================== CHAPTER 8 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 08</div>
+      <div class="chapter-title">Network Interception & Mocking</div>
+    </div>
+
+    <p>Network interception allows you to intercept, modify, or block network requests. This is invaluable for testing edge cases, error states, and isolating tests from external dependencies.</p>
+
+    <h2>Interception Flow</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="35" width="90" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="55" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Browser</text>
+        <text x="55" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="7">fetch() / XHR</text>
+
+        <text x="115" y="64" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="125" y="20" width="120" height="80" rx="6" fill="#e63946" opacity="0.1" stroke="#e63946" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text x="185" y="42" text-anchor="middle" fill="#e63946" font-family="Space Grotesk" font-size="9" font-weight="700">Playwright Route</text>
+        <text x="185" y="58" text-anchor="middle" fill="#e63946" font-family="JetBrains Mono" font-size="7">fulfill() / abort()</text>
+        <text x="185" y="72" text-anchor="middle" fill="#e63946" font-family="JetBrains Mono" font-size="7">continue() / fallback()</text>
+        <text x="185" y="86" text-anchor="middle" fill="#888" font-family="JetBrains Mono" font-size="7">modify response</text>
+
+        <text x="260" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="270" y="35" width="100" height="50" rx="6" fill="#2ecc71"/>
+        <text x="320" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Mock Data</text>
+        <text x="320" y="72" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="7">JSON fixture</text>
+
+        <text x="385" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
+
+        <rect x="395" y="35" width="95" height="50" rx="6" fill="#1a1a2e"/>
+        <text x="442" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Test</text>
+        <text x="442" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="7">verify UI</text>
+      </svg>
+      <div class="diagram-label">Figure 8.1 — Network interception & mock flow</div>
+    </div>
+
+    <h2>Mocking API Responses</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">mocking.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">test</span><span class="punc">,</span> <span class="fn">expect</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+<span class="kw">import</span> mockUsers <span class="kw">from</span> <span class="str">'../test-data/users.json'</span><span class="punc">;</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'displays mocked user data'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="cm">// Intercept and return mock data</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">route</span><span class="punc">(</span><span class="str">'**/api/users'</span><span class="punc">,</span> <span class="kw">async</span> route <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">await</span> route<span class="punc">.</span><span class="fn">fulfill</span><span class="punc">({</span>
+      <span class="prop">status</span><span class="punc">:</span> <span class="num">200</span><span class="punc">,</span>
+      <span class="prop">contentType</span><span class="punc">:</span> <span class="str">'application/json'</span><span class="punc">,</span>
+      <span class="prop">body</span><span class="punc">:</span> JSON<span class="punc">.</span><span class="fn">stringify</span><span class="punc">(</span>mockUsers<span class="punc">),</span>
+    <span class="punc">});</span>
+  <span class="punc">});</span>
+
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/users'</span><span class="punc">);</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByRole</span><span class="punc">(</span><span class="str">'row'</span><span class="punc">)).</span><span class="fn">toHaveCount</span><span class="punc">(</span>mockUsers<span class="punc">.</span>length<span class="punc">);</span>
+<span class="punc">});</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'handles API error gracefully'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">route</span><span class="punc">(</span><span class="str">'**/api/users'</span><span class="punc">,</span> route <span class="op">=></span>
+    route<span class="punc">.</span><span class="fn">fulfill</span><span class="punc">({</span> <span class="prop">status</span><span class="punc">:</span> <span class="num">500</span><span class="punc">,</span> <span class="prop">body</span><span class="punc">:</span> <span class="str">'Server Error'</span> <span class="punc">})</span>
+  <span class="punc">);</span>
+
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/users'</span><span class="punc">);</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'Failed to load'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+<span class="punc">});</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'blocks analytics tracking'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">route</span><span class="punc">(</span><span class="str">'**/analytics/**'</span><span class="punc">,</span> route <span class="op">=></span> route<span class="punc">.</span><span class="fn">abort</span><span class="punc">());</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/'</span><span class="punc">);</span>
+  <span class="cm">// No analytics calls made</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Har files:</strong> Use <code class="inline">page.routeFromHAR('recording.har', { update: false })</code> to replay recorded network traffic. Record once with <code class="inline">--record-har</code> flag, then replay in tests for fast, deterministic execution.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">23</span>
+  </div>
+
+  <!-- ==================== CHAPTER 9 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 09</div>
+      <div class="chapter-title">Visual Regression Testing</div>
+    </div>
+
+    <p>Visual regression testing captures screenshots and compares them against approved baselines. Playwright's built-in screenshot comparison engine handles anti-aliasing differences, color spaces, and rendering variations across browsers.</p>
+
+    <h2>Screenshot Comparison Types</h2>
+    <div class="step-grid">
+      <div class="step-box">
+        <span class="step-num">1</span>
+        <h4>Full Page Screenshot</h4>
+        <p>Captures the entire scrollable page including below-the-fold content.</p>
+      </div>
+      <div class="step-box">
+        <span class="step-num">2</span>
+        <h4>Element Screenshot</h4>
+        <p>Captures a specific component or section, ignoring the rest of the page.</p>
+      </div>
+      <div class="step-box">
+        <span class="step-num">3</span>
+        <h4>Viewport Screenshot</h4>
+        <p>Captures only the visible viewport area — good for responsive tests.</p>
+      </div>
+      <div class="step-box">
+        <span class="step-num">4</span>
+        <h4>Component Isolated</h4>
+        <p>Uses <code class="inline">toHaveScreenshot()</code> on a specific locator for component-level checks.</p>
+      </div>
+    </div>
+
+    <h2>Visual Testing in Practice</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">visual.spec.ts</span>
+      </div>
+      <pre><code><span class="fn">test</span><span class="punc">(</span><span class="str">'homepage visual regression'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/'</span><span class="punc">);</span>
+
+  <span class="cm">// Full page — generates __screenshots__/homepage-full.png</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveScreenshot</span><span class="punc">(</span><span class="str">'homepage-full.png'</span><span class="punc">,</span> <span class="punc">{</span>
+    <span class="prop">fullPage</span><span class="punc">:</span> <span class="kw">true</span><span class="punc">,</span>
+    <span class="prop">animations</span><span class="punc">:</span> <span class="str">'disabled'</span><span class="punc">,</span>
+  <span class="punc">});</span>
+
+  <span class="cm">// Component-level — only the hero section</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'.hero-section'</span><span class="punc">)).</span><span class="fn">toHaveScreenshot</span><span class="punc">(</span><span class="str">'hero.png'</span><span class="punc">,</span> <span class="punc">{</span>
+    <span class="prop">maxDiffPixelRatio</span><span class="punc">:</span> <span class="num">0.01</span><span class="punc">,</span>  <span class="cm">// Allow 1% pixel difference</span>
+  <span class="punc">});</span>
+<span class="punc">});</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'dark mode comparison'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/'</span><span class="punc">);</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">emulateMedia</span><span class="punc">({</span> <span class="prop">colorScheme</span><span class="punc">:</span> <span class="str">'dark'</span> <span class="punc">});</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">).</span><span class="fn">toHaveScreenshot</span><span class="punc">(</span><span class="str">'homepage-dark.png'</span><span class="punc">);</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Configuration Options</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Option</th><th>Description</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">threshold</code></td><td>Allowed perceived color difference (0-1)</td><td>0.2</td></tr>
+          <tr><td><code class="inline">maxDiffPixelRatio</code></td><td>Max ratio of differing pixels</td><td>0</td></tr>
+          <tr><td><code class="inline">maxDiffPixels</code></td><td>Max absolute number of differing pixels</td><td>0</td></tr>
+          <tr><td><code class="inline">animations</code></td><td>"disabled" | "allow"</td><td>"allow"</td></tr>
+          <tr><td><code class="inline">caret</code></td><td>"hide" | "initial"</td><td>"initial"</td></tr>
+          <tr><td><code class="inline">scale</code></td><td>"css" | "device"</td><td>"device"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warn">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div class="callout-content"><strong>Updating baselines:</strong> Use <code class="inline">npx playwright test --update-snapshots</code> to update all baselines. Review every diff carefully — never blindly update without understanding what changed.</div>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Mask dynamic regions (dates, ads, rotating banners) before screenshot assertions to reduce false-positive visual diffs.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">26</span>
+  </div>
+
+  <!-- ==================== CHAPTER 10 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 10</div>
+      <div class="chapter-title">CI/CD Pipeline Integration</div>
+    </div>
+
+    <p>Running Playwright tests in CI requires careful configuration for browser installation, caching, parallel execution, and artifact collection. Here's how to set up a production-grade pipeline.</p>
+
+    <h2>CI Pipeline Architecture</h2>
+    <div class="diagram-container">
+      <svg viewBox="0 0 500 140" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
+        <text x="40" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Install</text>
+        <text x="40" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">deps + browsers</text>
+        <text x="85" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+
+        <rect x="95" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
+        <text x="130" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Build</text>
+        <text x="130" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">compile app</text>
+        <text x="175" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+
+        <rect x="185" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
+        <text x="220" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Start</text>
+        <text x="220" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">app server</text>
+        <text x="265" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+
+        <rect x="275" y="25" width="70" height="85" rx="6" fill="#e63946"/>
+        <text x="310" y="52" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="700">Run Tests</text>
+        <text x="310" y="66" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">parallel</text>
+        <text x="310" y="78" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">sharded</text>
+        <text x="310" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">retries</text>
+        <text x="355" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+
+        <rect x="365" y="40" width="60" height="55" rx="6" fill="#2ecc71"/>
+        <text x="395" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Report</text>
+        <text x="395" y="78" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">upload</text>
+        <text x="435" y="70" fill="#2ecc71" font-size="12">&#x25B6;</text>
+
+        <rect x="440" y="40" width="55" height="55" rx="6" fill="#1a1a2e"/>
+        <text x="467" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Artifacts</text>
+        <text x="467" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">traces</text>
+
+        <!-- Label -->
+        <text x="250" y="15" text-anchor="middle" fill="#888" font-family="Space Grotesk" font-size="7" letter-spacing="2">CI/CD PIPELINE</text>
+      </svg>
+      <div class="diagram-label">Figure 10.1 — CI/CD pipeline stages</div>
+    </div>
+
+    <h2>GitHub Actions Configuration</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">.github/workflows/playwright.yml</span>
+      </div>
+      <pre><code><span class="attr">name</span><span class="punc">:</span> <span class="str">Playwright Tests</span>
+<span class="attr">on</span><span class="punc">:</span>
+  <span class="attr">push</span><span class="punc">:</span>
+    <span class="attr">branches</span><span class="punc">:</span> <span class="punc">[</span><span class="str">main</span><span class="punc">]</span>
+  <span class="attr">pull_request</span><span class="punc">:</span>
+    <span class="attr">branches</span><span class="punc">:</span> <span class="punc">[</span><span class="str">main</span><span class="punc">]</span>
+<span class="attr">jobs</span><span class="punc">:</span>
+  <span class="attr">test</span><span class="punc">:</span>
+    <span class="attr">runs-on</span><span class="punc">:</span> <span class="str">ubuntu-latest</span>
+    <span class="attr">strategy</span><span class="punc">:</span>
+      <span class="attr">fail-fast</span><span class="punc">:</span> <span class="kw">false</span>
+      <span class="attr">matrix</span><span class="punc">:</span>
+        <span class="attr">shard</span><span class="punc">:</span> <span class="punc">[</span><span class="num">1/4</span><span class="punc">,</span> <span class="num">2/4</span><span class="punc">,</span> <span class="num">3/4</span><span class="punc">,</span> <span class="num">4/4</span><span class="punc">]</span>
+    <span class="attr">steps</span><span class="punc">:</span>
+      <span class="cm">- uses: actions/checkout@v4</span>
+      <span class="cm">- uses: actions/setup-node@v4</span>
+        <span class="attr">with</span><span class="punc">:</span>
+          <span class="attr">node-version</span><span class="punc">:</span> <span class="str">20</span>
+          <span class="attr">cache</span><span class="punc">:</span> <span class="str">'npm'</span>
+      <span class="cm">- name: Install dependencies</span>
+        <span class="attr">run</span><span class="punc">:</span> <span class="str">npm ci</span>
+      <span class="cm">- name: Install Playwright browsers</span>
+        <span class="attr">run</span><span class="punc">:</span> <span class="str">npx playwright install --with-deps</span>
+      <span class="cm">- name: Run Playwright tests</span>
+        <span class="attr">run</span><span class="punc">:</span> <span class="str">npx playwright test --shard=${{ matrix.shard }}</span>
+      <span class="cm">- uses: actions/upload-artifact@v4</span>
+        <span class="attr">if</span><span class="punc">:</span> <span class="str">${{ failure() }}</span>
+        <span class="attr">with</span><span class="punc">:</span>
+          <span class="attr">name</span><span class="punc">:</span> <span class="str">test-results-${{ matrix.shard }}</span>
+          <span class="attr">path</span><span class="punc">:</span> <span class="str">test-results/</span>
+          <span class="attr">retention-days</span><span class="punc">:</span> <span class="num">7</span></code></pre>
+    </div>
+
+    <div class="callout callout-info">
+      <i class="fas fa-circle-info"></i>
+      <div class="callout-content"><strong>Sharding:</strong> Split tests across 4 parallel jobs with <code class="inline">--shard=N/4</code>. Each shard runs a subset of tests. Total wall-clock time drops to roughly 1/4 of single-job execution.</div>
+    </div>
+
+    <h2>Docker-Based Execution</h2>
+    <p>Use official Microsoft Playwright Docker images for consistent environments across local and CI execution. No browser installation needed — images come pre-bundled.</p>
+
+    <h3>Local Docker Execution</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">terminal</span>
+      </div>
+      <pre><code><span class="cm"># Run tests in Docker container (latest Playwright image)</span>
+docker run <span class="op">-</span>v <span class="str">$(pwd):/work</span> <span class="op">-</span>w <span class="str">/work</span> <span class="op">-</span>it <span class="op">--</span>rm <span class="op">--</span>ipc<span class="op">=</span>host <span class="op">\</span>
+  mcr<span class="punc">.</span>microsoft<span class="punc">.</span>com<span class="punc">/</span>playwright<span class="punc">:</span>v1<span class="punc">.</span><span class="num">60</span><span class="punc">.</span><span class="num">0</span><span class="op">-</span>noble <span class="op">\</span>
+  <span class="fn">npm</span> ci <span class="op">&&</span> npx playwright <span class="fn">test</span>
+
+<span class="cm"># Run specific project</span>
+docker run <span class="op">-</span>v <span class="str">$(pwd):/work</span> <span class="op">-</span>w <span class="str">/work</span> <span class="op">-</span>it <span class="op">--</span>rm <span class="op">--</span>ipc<span class="op">=</span>host <span class="op">\</span>
+  mcr<span class="punc">.</span>microsoft<span class="punc">.</span>com<span class="punc">/</span>playwright<span class="punc">:</span>v1<span class="punc">.</span><span class="num">60</span><span class="punc">.</span><span class="num">0</span><span class="op">-</span>noble <span class="op">\</span>
+  npx playwright <span class="fn">test</span> <span class="op">--</span>project<span class="op">=</span>chromium</code></pre>
+    </div>
+
+    <h3>Docker Compose</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">docker-compose.yml</span>
+      </div>
+      <pre><code><span class="attr">version</span><span class="punc">:</span> <span class="str">'3.8'</span>
+<span class="attr">services</span><span class="punc">:</span>
+  <span class="attr">playwright</span><span class="punc">:</span>
+    <span class="attr">image</span><span class="punc">:</span> <span class="str">mcr.microsoft.com/playwright:v1.60.0-noble</span>
+    <span class="attr">volumes</span><span class="punc">:</span>
+      <span class="punc">-</span> <span class="str">./:/work</span>
+    <span class="attr">working_dir</span><span class="punc">:</span> <span class="str">/work</span>
+    <span class="attr">ipc</span><span class="punc">:</span> <span class="str">host</span>
+    <span class="attr">command</span><span class="punc">:</span> <span class="str">bash -c "npm ci && npx playwright test"</span>
+
+<span class="cm"># Run: docker compose run playwright</span></code></pre>
+    </div>
+
+    <h3>GitHub Actions with Docker</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">.github/workflows/playwright-docker.yml</span>
+      </div>
+      <pre><code><span class="attr">name</span><span class="punc">:</span> <span class="str">Playwright Tests (Docker)</span>
+<span class="attr">on</span><span class="punc">:</span> <span class="punc">[</span><span class="str">push</span><span class="punc">,</span> <span class="str">pull_request</span><span class="punc">]</span>
+<span class="attr">jobs</span><span class="punc">:</span>
+  <span class="attr">test</span><span class="punc">:</span>
+    <span class="attr">runs-on</span><span class="punc">:</span> <span class="str">ubuntu-latest</span>
+    <span class="attr">container</span><span class="punc">:</span>
+      <span class="attr">image</span><span class="punc">:</span> <span class="str">mcr.microsoft.com/playwright:v1.60.0-noble</span>
+      <span class="attr">options</span><span class="punc">:</span> <span class="str">--ipc=host --user 1001</span>
+    <span class="attr">steps</span><span class="punc">:</span>
+      <span class="cm">- uses: actions/checkout@v4</span>
+      <span class="cm">- name: Install dependencies</span>
+        <span class="attr">run</span><span class="punc">:</span> <span class="str">npm ci</span>
+      <span class="cm">- name: Run Playwright tests</span>
+        <span class="attr">run</span><span class="punc">:</span> <span class="str">npx playwright test</span>
+        <span class="attr">env</span><span class="punc">:</span>
+          <span class="attr">HOME</span><span class="punc">:</span> <span class="str">/root</span>
+      <span class="cm">- uses: actions/upload-artifact@v4</span>
+        <span class="attr">if</span><span class="punc">:</span> <span class="str">${{ failure() }}</span>
+        <span class="attr">with</span><span class="punc">:</span>
+          <span class="attr">name</span><span class="punc">:</span> <span class="str">test-results</span>
+          <span class="attr">path</span><span class="punc">:</span> <span class="str">test-results/</span></code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Docker benefits:</strong> Skip browser installation (saves 30-60s per job), guaranteed consistent environment, and simplified CI configuration. Use <code class="inline">--ipc=host</code> to prevent Chromium crashes in containers.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">29</span>
+  </div>
+
+  <!-- ==================== CHAPTER 11 ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 11</div>
+      <div class="chapter-title">Best Practices & Anti-Patterns</div>
+    </div>
+
+    <h2>Do's and Don'ts</h2>
+    <div class="comparison">
+      <div class="compare-col good">
+        <div class="compare-label"><i class="fas fa-check-circle"></i> Do This</div>
+        <ul style="margin:0; font-size:9pt;">
+          <li>Use role-based and text-based locators</li>
+          <li>Use <code class="inline">test.describe</code> blocks for grouping</li>
+          <li>Use custom fixtures for shared setup</li>
+          <li>Set baseURL in config, not in each test</li>
+          <li>Use <code class="inline">test.slow()</code> for known slow tests</li>
+          <li>Tag tests with <code class="inline">@smoke</code>, <code class="inline">@regression</code></li>
+          <li>Use storage state for auth persistence</li>
+          <li>Keep tests independent and order-free</li>
+        </ul>
+      </div>
+      <div class="compare-col bad">
+        <div class="compare-label"><i class="fas fa-times-circle"></i> Avoid This</div>
+        <ul style="margin:0; font-size:9pt;">
+          <li>CSS selectors like <code class="inline">.btn > span</code></li>
+          <li>XPath for element selection</li>
+          <li><code class="inline">waitForTimeout()</code> in production</li>
+          <li>Hard-coded sleep/delay values</li>
+          <li>Tests that depend on run order</li>
+          <li>Sharing mutable state between tests</li>
+          <li>Testing implementation details</li>
+          <li>Ignoring flaky tests instead of fixing</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Custom Fixtures Pattern</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">tests/fixtures/auth.fixture.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> <span class="fn">test</span> <span class="kw">as</span> base<span class="punc">,</span> <span class="type">Page</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+<span class="kw">import</span> <span class="punc">{</span> <span class="type">LoginPage</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'../../pages/LoginPage'</span><span class="punc">;</span>
+
+<span class="kw">type</span> <span class="type">AuthFixtures</span> <span class="op">=</span> <span class="punc">{</span>
+  <span class="prop">authenticatedPage</span><span class="punc">:</span> <span class="type">Page</span><span class="punc">;</span>
+  <span class="prop">loginPage</span><span class="punc">:</span> <span class="type">LoginPage</span><span class="punc">;</span>
+<span class="punc">};</span>
+
+<span class="kw">export</span> <span class="kw">const</span> test <span class="op">=</span> base<span class="punc">.</span><span class="fn">extend</span><span class="punc">&lt;</span><span class="type">AuthFixtures</span><span class="punc">&gt;({</span>
+  <span class="prop">loginPage</span><span class="punc">:</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">},</span> use<span class="punc">)</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">await</span> <span class="fn">use</span><span class="punc">(</span><span class="kw">new</span> <span class="fn">LoginPage</span><span class="punc">(</span>page<span class="punc">));</span>
+  <span class="punc">},</span>
+  <span class="prop">authenticatedPage</span><span class="punc">:</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">},</span> use<span class="punc">)</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Reuse stored authentication state</span>
+    <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/login'</span><span class="punc">);</span>
+    <span class="kw">const</span> loginPage <span class="op">=</span> <span class="kw">new</span> <span class="fn">LoginPage</span><span class="punc">(</span>page<span class="punc">);</span>
+    <span class="kw">await</span> loginPage<span class="punc">.</span><span class="fn">login</span><span class="punc">(</span><span class="str">'admin@test.com'</span><span class="punc">,</span> <span class="str">'password123'</span><span class="punc">);</span>
+    <span class="kw">await</span> <span class="fn">use</span><span class="punc">(</span>page<span class="punc">);</span>
+  <span class="punc">},</span>
+<span class="punc">});</span>
+
+<span class="kw">export</span> <span class="punc">{</span> <span class="fn">expect</span> <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span></code></pre>
+    </div>
+
+    <h2>Test Organization with Tags</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">tagged-tests.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> test<span class="punc">,</span> expect <span class="punc">}</span> <span class="kw">from</span> <span class="str">'../fixtures/auth.fixture'</span><span class="punc">;</span>
+
+<span class="fn">test.describe</span><span class="punc">(</span><span class="str">'Checkout Flow'</span><span class="punc">,</span> <span class="punc">()</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="fn">test</span><span class="punc">(</span><span class="str">'@smoke @critical add item to cart'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> authenticatedPage <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Fast critical path test</span>
+  <span class="punc">});</span>
+
+  <span class="fn">test</span><span class="punc">(</span><span class="str">'@regression cart quantity update'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> authenticatedPage <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Detailed regression test</span>
+  <span class="punc">});</span>
+<span class="punc">});</span>
+
+<span class="cm">// Run only smoke tests: npx playwright test --grep @smoke</span>
+<span class="cm">// Skip regression:  npx playwright test --grep-invert @regression</span></code></pre>
+    </div>
+
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Storage state for speed:</strong> Save browser storage after login with <code class="inline">page.context().storageState()</code>. Reuse it across tests to skip login on every test — reduces test time by 30-50%.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">32</span>
+  </div>
+
+  <!-- ==================== CHAPTER 12 — CHEAT SHEET ==================== -->
+  <div class="page">
+    <div class="chapter-header">
+      <div class="chapter-number">Chapter 12</div>
+      <div class="chapter-title">Quick Reference Cheat Sheet</div>
+    </div>
+
+    <h2>Test Structure</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">test-anatomy.ts</span>
+      </div>
+      <pre><code><span class="fn">test.describe</span><span class="punc">(</span><span class="str">'Feature Name'</span><span class="punc">,</span> <span class="punc">()</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="fn">test.beforeEach</span><span class="punc">(</span><span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/feature'</span><span class="punc">);</span>
+  <span class="punc">});</span>
+
+  <span class="fn">test</span><span class="punc">(</span><span class="str">'does something expected'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Arrange — set up state</span>
+    <span class="cm">// Act — perform action</span>
+    <span class="cm">// Assert — verify outcome</span>
+  <span class="punc">});</span>
+
+  <span class="fn">test.afterEach</span><span class="punc">(</span><span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Cleanup if needed</span>
+  <span class="punc">});</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>CLI Commands</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">npx playwright test</code></td><td>Run all tests</td></tr>
+          <tr><td><code class="inline">npx playwright test file.spec.ts</code></td><td>Run specific file</td></tr>
+          <tr><td><code class="inline">npx playwright test -g "pattern"</code></td><td>Run tests matching pattern</td></tr>
+          <tr><td><code class="inline">npx playwright test --project=chromium</code></td><td>Run single project</td></tr>
+          <tr><td><code class="inline">npx playwright test --debug</code></td><td>Open Inspector (Playwright UI)</td></tr>
+          <tr><td><code class="inline">npx playwright test --trace on</code></td><td>Record traces for all tests</td></tr>
+          <tr><td><code class="inline">npx playwright show-trace trace.zip</code></td><td>Open trace viewer</td></tr>
+          <tr><td><code class="inline">npx playwright test --ui</code></td><td>Launch Playwright UI mode</td></tr>
+          <tr><td><code class="inline">npx playwright codegen localhost:3000</code></td><td>Generate test code by recording</td></tr>
+          <tr><td><code class="inline">npx playwright screenshot url out.png</code></td><td>Capture screenshot from CLI</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Playwright 1.50+ and 1.60 Highlights</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Feature</th><th>Version</th><th>Why It Matters</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">test.step(..., { timeout })</code></td><td>1.50</td><td>Set timeout per step, not only per test.</td></tr>
+          <tr><td><code class="inline">test.step.skip()</code></td><td>1.50</td><td>Skip individual steps while keeping test flow readable.</td></tr>
+          <tr><td><code class="inline">locator.filter({ visible: true })</code></td><td>1.51</td><td>Filter only visible elements to reduce flaky interactions.</td></tr>
+          <tr><td><code class="inline">storageState({ indexedDB: true })</code></td><td>1.51</td><td>Persist auth/session flows that depend on IndexedDB.</td></tr>
+          <tr><td><code class="inline">locator.setInputFiles()</code></td><td>1.50+</td><td>Upload files via drag-drop or file inputs with buffer support.</td></tr>
+          <tr><td><code class="inline">test.abort()</code></td><td>1.60</td><td>Fail fast when test misuse or forbidden actions are detected.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span class="code-filename">modern-features.spec.ts</span>
+      </div>
+      <pre><code><span class="kw">import</span> <span class="punc">{</span> test<span class="punc">,</span> expect <span class="punc">}</span> <span class="kw">from</span> <span class="str">'@playwright/test'</span><span class="punc">;</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'modern features in 1.50+'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> test<span class="punc">.</span><span class="fn">step</span><span class="punc">(</span><span class="str">'load dashboard'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">()</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/dashboard'</span><span class="punc">);</span>
+  <span class="punc">},</span> <span class="punc">{</span> <span class="prop">timeout</span><span class="punc">:</span> <span class="num">15_000</span> <span class="punc">});</span>
+
+  <span class="kw">await</span> test<span class="punc">.</span>step<span class="punc">.</span><span class="fn">skip</span><span class="punc">(</span><span class="str">'legacy fallback flow'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">()</span> <span class="op">=></span> <span class="punc">{</span>
+    <span class="cm">// Temporarily skipped while feature flag is disabled.</span>
+  <span class="punc">});</span>
+
+  <span class="kw">const</span> visibleItems <span class="op">=</span> page<span class="punc">.</span><span class="fn">getByTestId</span><span class="punc">(</span><span class="str">'todo-item'</span><span class="punc">).</span><span class="fn">filter</span><span class="punc">({</span> <span class="prop">visible</span><span class="punc">:</span> <span class="kw">true</span> <span class="punc">});</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>visibleItems<span class="punc">).</span><span class="fn">toHaveCount</span><span class="punc">(</span><span class="num">3</span><span class="punc">);</span>
+<span class="punc">});</span>
+
+<span class="fn">test</span><span class="punc">(</span><span class="str">'file upload with buffer (1.50+)'</span><span class="punc">,</span> <span class="kw">async</span> <span class="punc">({</span> page <span class="punc">})</span> <span class="op">=></span> <span class="punc">{</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">goto</span><span class="punc">(</span><span class="str">'/upload'</span><span class="punc">);</span>
+  <span class="cm">// Upload file from memory buffer (no disk file needed)</span>
+  <span class="kw">await</span> page<span class="punc">.</span><span class="fn">locator</span><span class="punc">(</span><span class="str">'input[type="file"]'</span><span class="punc">).</span><span class="fn">setInputFiles</span><span class="punc">({</span>
+    <span class="prop">name</span><span class="punc">:</span> <span class="str">'note.txt'</span><span class="punc">,</span>
+    <span class="prop">mimeType</span><span class="punc">:</span> <span class="str">'text/plain'</span><span class="punc">,</span>
+    <span class="prop">buffer</span><span class="punc">:</span> Buffer<span class="punc">.</span><span class="fn">from</span><span class="punc">(</span><span class="str">'Dynamically generated content'</span><span class="punc">)</span>
+  <span class="punc">});</span>
+  <span class="kw">await</span> <span class="fn">expect</span><span class="punc">(</span>page<span class="punc">.</span><span class="fn">getByText</span><span class="punc">(</span><span class="str">'note.txt'</span><span class="punc">)).</span><span class="fn">toBeVisible</span><span class="punc">();</span>
+<span class="punc">});</span></code></pre>
+    </div>
+
+    <h2>Common Assertion Quick Reference</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Assertion</th><th>What It Checks</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">toBeVisible()</code></td><td>Element is in DOM and visible</td></tr>
+          <tr><td><code class="inline">toBeHidden()</code></td><td>Element is hidden or not in DOM</td></tr>
+          <tr><td><code class="inline">toBeEnabled() / toBeDisabled()</code></td><td>Form element state</td></tr>
+          <tr><td><code class="inline">toBeChecked()</code></td><td>Checkbox/radio is selected</td></tr>
+          <tr><td><code class="inline">toHaveText()</code></td><td>Exact text content match</td></tr>
+          <tr><td><code class="inline">toContainText()</code></td><td>Partial text content match</td></tr>
+          <tr><td><code class="inline">toHaveValue()</code></td><td>Input element value</td></tr>
+          <tr><td><code class="inline">toHaveAttribute()</code></td><td>Element has specific attribute</td></tr>
+          <tr><td><code class="inline">toHaveClass()</code></td><td>Element has matching class</td></tr>
+          <tr><td><code class="inline">toHaveCount()</code></td><td>Number of matching elements</td></tr>
+          <tr><td><code class="inline">toHaveURL()</code></td><td>Current page URL</td></tr>
+          <tr><td><code class="inline">toHaveTitle()</code></td><td>Current page title</td></tr>
+          <tr><td><code class="inline">toHaveScreenshot()</code></td><td>Visual match to baseline</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-tip">
+      <i class="fas fa-lightbulb"></i>
+      <div class="callout-content"><strong>Tip:</strong> Keep this page as your daily command and assertion lookup; pair it with tags and fixtures to speed up triage and targeted reruns.</div>
+    </div>
+    <span class="page-author">Mahiteja Bollojula</span>
+    <span class="page-number">35</span>
+  </div>
+
+  <!-- ==================== BACK COVER ==================== -->
+  <div class="cover" style="min-height: 297mm; justify-content: flex-end; padding-bottom: 80px;">
+    <div class="cover-grid"></div>
+    <div style="position:relative; z-index:1; text-align:center;">
+      <div class="cover-logo" style="width:60px; height:60px; margin: 0 auto 24px;">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <mask id="mask2" x="0" y="0" width="100" height="100">
+            <rect width="100" height="100" rx="20" fill="white"/>
+          </mask>
+          <g mask="url(#mask2)">
+            <rect width="100" height="100" rx="20" fill="rgba(230,57,70,0.3)"/>
+            <path d="M25 30 L50 15 L75 30 L75 70 L50 85 L25 70Z" fill="none" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="50" cy="50" r="10" fill="white" opacity="0.5"/>
+          </g>
+        </svg>
+      </div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:14pt; color:#fff; font-weight:300; margin-bottom:8px;">Playwright TypeScript Playbook</div>
+      <div style="color:#8888a8; font-size:9pt; line-height:1.8;">
+        Built for developers who ship with confidence.<br>
+        Comprehensive. Practical. Production-ready.<br><br>
+        <span style="color:#e63946;">playwright.dev</span> &middot;
+        <span style="color:#e63946;">github.com/microsoft/playwright</span>
+      </div>
+      
+      <div class="about-author">
+        <h3>About the Author</h3>
+        <p><strong style="color:#e63946;">Mahiteja Bollojula</strong> specializes in end-to-end testing frameworks and modern web testing architectures. With extensive experience building production-grade test automation systems, Mahiteja has helped teams transition from fragile, flaky test suites to robust, maintainable automation that developers trust.</p>
+        <p>This playbook distills years of hands-on Playwright experience into practical patterns you can apply immediately to your projects.</p>
+        <div class="social-links">
+          <a href="https://www.linkedin.com/in/mahiteja-bollojula-477a60145/" target="_blank" rel="noopener" class="social-icon-btn" title="Connect on LinkedIn">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="cover-decoration" style="margin-top:40px;">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Smooth scroll for TOC items
+  document.querySelectorAll('.toc-item').forEach(item => {
+    item.addEventListener('click', () => {
+      // Visual feedback on click
+      item.style.background = '#f7f7fc';
+      item.style.borderRadius = '4px';
+      setTimeout(() => {
+        item.style.background = '';
+      }, 300);
+    });
+  });
+</script>
+
+</body>
+</html>
