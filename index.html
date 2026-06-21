@@ -711,6 +711,307 @@
       to { opacity: 1; transform: translateY(0); }
     }
   }
+
+  /* Mobile optimizations */
+  @media screen and (max-width: 768px) {
+    /* Base layout adjustments */
+    body {
+      font-size: 11pt;
+      line-height: 1.6;
+    }
+    
+    .page {
+      width: 100%;
+      max-width: 100%;
+      min-height: auto;
+      padding: 20px 16px;
+      margin: 0;
+      box-shadow: none;
+    }
+    
+    .cover-page {
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+    
+    /* Typography scaling */
+    h1 {
+      font-size: 20pt;
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+    
+    h2 {
+      font-size: 16pt;
+      line-height: 1.3;
+      margin: 20px 0 12px;
+    }
+    
+    h3 {
+      font-size: 14pt;
+      margin: 16px 0 10px;
+    }
+    
+    p, li {
+      font-size: 11pt;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+    
+    /* Cover page elements */
+    .cover-title {
+      font-size: 24pt;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    
+    .cover-subtitle {
+      font-size: 12pt;
+      margin-bottom: 20px;
+    }
+    
+    .cover-version {
+      font-size: 10pt;
+      margin-bottom: 30px;
+    }
+    
+    .cover-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 30px;
+    }
+    
+    .cover-author {
+      margin-top: 40px;
+    }
+    
+    .cover-author-name {
+      font-size: 14pt;
+    }
+    
+    .author-linkedin {
+      padding: 12px 16px;
+      margin-top: 15px;
+      font-size: 10pt;
+      background: rgba(230, 57, 70, 0.1);
+      border-radius: 8px;
+      min-height: 44px;
+      justify-content: center;
+    }
+    
+    .author-linkedin i {
+      font-size: 13pt;
+    }
+    
+    .cover-author-name a {
+      display: inline-block;
+      padding: 8px 0;
+      min-height: 44px;
+      line-height: 1.5;
+    }
+    
+    .social-icon-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 20pt;
+    }
+    
+    .cover-decoration span {
+      width: 25px;
+      height: 3px;
+    }
+    
+    /* Chapter headers */
+    .chapter-header {
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .chapter-number {
+      font-size: 11pt;
+      margin-bottom: 6px;
+    }
+    
+    .chapter-title {
+      font-size: 18pt;
+      line-height: 1.2;
+    }
+    
+    /* Code blocks */
+    pre {
+      padding: 12px;
+      font-size: 9pt;
+      line-height: 1.5;
+      margin: 12px 0;
+      overflow-x: auto;
+      border-radius: 6px;
+    }
+    
+    code {
+      font-size: 9.5pt;
+      padding: 2px 6px;
+    }
+    
+    /* Tables */
+    table {
+      font-size: 9.5pt;
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    th, td {
+      padding: 8px;
+      font-size: 9.5pt;
+    }
+    
+    /* Diagrams - make them responsive */
+    .diagram-container {
+      margin: 20px 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    .diagram-label {
+      font-size: 9pt;
+      margin-top: 10px;
+    }
+    
+    /* Lists */
+    ul, ol {
+      padding-left: 20px;
+      margin: 12px 0;
+    }
+    
+    li {
+      margin-bottom: 8px;
+    }
+    
+    /* Tip boxes */
+    .tip-box {
+      padding: 12px;
+      margin: 16px 0;
+      font-size: 10pt;
+      border-radius: 6px;
+    }
+    
+    .tip-box strong {
+      font-size: 10.5pt;
+    }
+    
+    /* TOC */
+    .toc-section {
+      padding: 12px;
+    }
+    
+    .toc-chapter {
+      font-size: 11pt;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    
+    .toc-number {
+      font-size: 10pt;
+      min-width: 35px;
+    }
+    
+    .toc-title {
+      font-size: 11pt;
+    }
+    
+    .toc-topics {
+      font-size: 9pt;
+      margin-top: 6px;
+      padding-left: 12px;
+    }
+    
+    /* Page numbers - hide on mobile */
+    .page-number {
+      display: none;
+    }
+    
+    /* Back cover */
+    .about-author {
+      padding: 20px;
+      border-radius: 8px;
+    }
+    
+    .about-author h2 {
+      font-size: 16pt;
+      margin-bottom: 12px;
+    }
+    
+    .about-author p {
+      font-size: 10.5pt;
+      line-height: 1.7;
+    }
+    
+    .social-links {
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    /* Ensure links are tappable */
+    a {
+      min-height: 24px;
+      display: inline-block;
+    }
+    
+    /* Better spacing for content sections */
+    .page > *:first-child {
+      margin-top: 0;
+    }
+    
+    /* Responsive images if any */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Better readability for inline code */
+    p code, li code {
+      white-space: normal;
+      word-break: break-word;
+    }
+    
+    /* Horizontal scrolling hint for tables/code */
+    pre, table {
+      border: 1px solid var(--border);
+    }
+  }
+  
+  /* Extra small devices (phones in portrait mode) */
+  @media screen and (max-width: 480px) {
+    .page {
+      padding: 16px 12px;
+    }
+    
+    .cover-title {
+      font-size: 20pt;
+    }
+    
+    .chapter-title {
+      font-size: 16pt;
+    }
+    
+    h2 {
+      font-size: 14pt;
+    }
+    
+    pre, code, table {
+      font-size: 8.5pt;
+    }
+    
+    .tip-box {
+      padding: 10px;
+      font-size: 9.5pt;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1369,7 +1670,6 @@ npx playwright --version</code></pre>
         <rect x="170" y="5" width="200" height="35" rx="6" fill="#e63946"/>
         <text x="270" y="27" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="700" font-size="11">Test Spec</text>
         <line x1="270" y1="40" x2="270" y2="60" stroke="#e63946" stroke-width="1.5"/>
-        <text x="280" y="55" fill="#e63946" font-size="9">&#x25BC;</text>
 
         <!-- Fixture layer -->
         <rect x="150" y="60" width="240" height="35" rx="6" fill="#9b59b6" opacity="0.9"/>
@@ -1379,10 +1679,6 @@ npx playwright --version</code></pre>
         <line x1="220" y1="95" x2="180" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
         <line x1="270" y1="95" x2="270" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
         <line x1="320" y1="95" x2="360" y2="125" stroke="#9b59b6" stroke-width="1.5"/>
-        
-        <text x="190" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
-        <text x="280" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
-        <text x="370" y="118" fill="#9b59b6" font-size="9">&#x25BC;</text>
 
         <!-- Page Object layer (flat, independent) -->
         <rect x="20" y="125" width="150" height="35" rx="6" fill="#3498db"/>
@@ -1394,7 +1690,7 @@ npx playwright --version</code></pre>
         <rect x="370" y="125" width="150" height="35" rx="6" fill="#3498db"/>
         <text x="445" y="147" text-anchor="middle" fill="white" font-family="Space Grotesk" font-weight="600" font-size="10">CheckoutPage</text>
         
-        <!-- Arrows down to Playwright API -->
+        <!-- Lines down to Playwright API -->
         <line x1="95" y1="160" x2="95" y2="180" stroke="#3498db" stroke-width="1.2"/>
         <line x1="270" y1="160" x2="270" y2="180" stroke="#3498db" stroke-width="1.2"/>
         <line x1="445" y1="160" x2="445" y2="180" stroke="#3498db" stroke-width="1.2"/>
@@ -1402,7 +1698,6 @@ npx playwright --version</code></pre>
         <line x1="95" y1="180" x2="270" y2="180" stroke="#3498db" stroke-width="1.2"/>
         <line x1="270" y1="180" x2="445" y2="180" stroke="#3498db" stroke-width="1.2"/>
         <line x1="270" y1="180" x2="270" y2="192" stroke="#3498db" stroke-width="1.5"/>
-        <text x="280" y="190" fill="#3498db" font-size="9">&#x25BC;</text>
 
         <!-- Playwright API -->
         <rect x="150" y="192" width="240" height="25" rx="4" fill="#f0f0f8" stroke="#3178c6" stroke-width="1"/>
@@ -1731,7 +2026,7 @@ npx playwright --version</code></pre>
         <text x="55" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Browser</text>
         <text x="55" y="72" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="7">fetch() / XHR</text>
 
-        <text x="115" y="64" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
+        <text x="110" y="64" fill="#e63946" font-size="14" font-weight="700">&#x25B6;</text>
 
         <rect x="125" y="20" width="120" height="80" rx="6" fill="#e63946" opacity="0.1" stroke="#e63946" stroke-width="1.5" stroke-dasharray="4,2"/>
         <text x="185" y="42" text-anchor="middle" fill="#e63946" font-family="Space Grotesk" font-size="9" font-weight="700">Playwright Route</text>
@@ -1739,13 +2034,13 @@ npx playwright --version</code></pre>
         <text x="185" y="72" text-anchor="middle" fill="#e63946" font-family="JetBrains Mono" font-size="7">continue() / fallback()</text>
         <text x="185" y="86" text-anchor="middle" fill="#888" font-family="JetBrains Mono" font-size="7">modify response</text>
 
-        <text x="260" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
+        <text x="255" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
 
         <rect x="270" y="35" width="100" height="50" rx="6" fill="#2ecc71"/>
         <text x="320" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Mock Data</text>
         <text x="320" y="72" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="7">JSON fixture</text>
 
-        <text x="385" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
+        <text x="380" y="64" fill="#2ecc71" font-size="14" font-weight="700">&#x25B6;</text>
 
         <rect x="395" y="35" width="95" height="50" rx="6" fill="#1a1a2e"/>
         <text x="442" y="58" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="9" font-weight="600">Test</text>
@@ -1904,29 +2199,29 @@ npx playwright --version</code></pre>
         <rect x="5" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
         <text x="40" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Install</text>
         <text x="40" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">deps + browsers</text>
-        <text x="85" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+        <text x="80" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
 
         <rect x="95" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
         <text x="130" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Build</text>
         <text x="130" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">compile app</text>
-        <text x="175" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+        <text x="170" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
 
         <rect x="185" y="40" width="70" height="55" rx="6" fill="#1a1a2e"/>
         <text x="220" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Start</text>
         <text x="220" y="78" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="6">app server</text>
-        <text x="265" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+        <text x="260" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
 
         <rect x="275" y="25" width="70" height="85" rx="6" fill="#e63946"/>
         <text x="310" y="52" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="700">Run Tests</text>
         <text x="310" y="66" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">parallel</text>
         <text x="310" y="78" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">sharded</text>
         <text x="310" y="90" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">retries</text>
-        <text x="355" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
+        <text x="350" y="70" fill="#e63946" font-size="12">&#x25B6;</text>
 
         <rect x="365" y="40" width="60" height="55" rx="6" fill="#2ecc71"/>
         <text x="395" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Report</text>
         <text x="395" y="78" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-family="JetBrains Mono" font-size="6">upload</text>
-        <text x="435" y="70" fill="#2ecc71" font-size="12">&#x25B6;</text>
+        <text x="430" y="70" fill="#2ecc71" font-size="12">&#x25B6;</text>
 
         <rect x="440" y="40" width="55" height="55" rx="6" fill="#1a1a2e"/>
         <text x="467" y="64" text-anchor="middle" fill="white" font-family="Space Grotesk" font-size="8" font-weight="600">Artifacts</text>
